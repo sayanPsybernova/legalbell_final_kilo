@@ -615,6 +615,28 @@
       "fee": 500,
       "image": "https://i.pravatar.cc/150?u=56",
       "about": "Specialized in employment disputes and labor law matters."
+    },
+    {
+      "id": 57,
+      "name": "Adv. Rajat Sharma",
+      "specialization": "Criminal",
+      "sub_specialty": "Assault & Violence",
+      "experience": 10,
+      "location": "Kolkata",
+      "fee": 650,
+      "image": "https://i.pravatar.cc/150?u=57",
+      "about": "Expert in assault cases and violent crime defense with extensive trial experience."
+    },
+    {
+      "id": 58,
+      "name": "Adv. Pooja Mukherjee",
+      "specialization": "Criminal",
+      "sub_specialty": "Theft & Robbery",
+      "experience": 8,
+      "location": "Kolkata",
+      "fee": 500,
+      "image": "https://i.pravatar.cc/150?u=58",
+      "about": "Specializes in theft, robbery, and property crime cases in Kolkata."
     }
   ],
   "bookings": [],

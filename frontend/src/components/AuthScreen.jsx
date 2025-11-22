@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-export default function AuthScreen({ onLogin, onRegister }) {
+export default function AuthScreen({ onLogin, onRegister, onBackToResults }) {
   const [role, setRole] = useState('client')
   const [isRegister, setIsRegister] = useState(false)
   const [formData, setFormData] = useState({ name:'', email:'', city:'', specialization:'Criminal', fee:'', experience:'', about:'' })
@@ -16,6 +16,17 @@ export default function AuthScreen({ onLogin, onRegister }) {
 
   return (
     <div className="card" style={{maxWidth:520,margin:'0 auto'}}>
+      {onBackToResults && (
+        <div style={{marginBottom:12}}>
+          <button
+            className="btn"
+            onClick={onBackToResults}
+            style={{background:'#64748b'}}
+          >
+            ← Back to Search Results
+          </button>
+        </div>
+      )}
       <h2 style={{textAlign:'center'}}>{isRegister ? `Register as ${role}` : 'Welcome Back'}</h2>
       <div style={{display:'flex',gap:8,marginBottom:12}}>
         <button className="btn" onClick={()=>setRole('client')} style={{flex:1,background: role==='client'?'#0f172a':'#fff', color: role==='client'?'#fff':'#0f172a'}}>Client</button>

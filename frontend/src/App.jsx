@@ -17,6 +17,7 @@ export default function App() {
   const [searchParams, setSearchParams] = useState({ location: '', type: '' })
   const [selectedLawyer, setSelectedLawyer] = useState(null)
   const [bookings, setBookings] = useState([])
+  const [previousSearch, setPreviousSearch] = useState(null)
 
   useEffect(() => {
     // fetch initial lawyers
@@ -74,14 +75,41 @@ export default function App() {
         </div>
       </div>
 
-      {view === 'landing' && <LandingChat onSearchComplete={(p)=>{ setSearchParams(p); fetchLawyers(p); setView('results'); }} />}
+      {view === 'landing' && <LandingChat onSearchComplete={(p)=>{
+        setSearchParams(p);
+        fetchLawyers(p);
+        setPreviousSearch({ params: p, lawyers: p.lawyers || [] });
+        setView('results');
+      }} />}
       {view === 'results' && <LawyerResults
         lawyers={lawyers}
         params={searchParams}
-        onSelect={(l)=>{ setSelectedLawyer(l); if (!user) setView('auth'); else setView('booking'); }}
+        onSelect={(l)=>{
+          setSelectedLawyer(l);
+          if (!user) {
+            // Store current search before going to auth
+            setPreviousSearch({ params: searchParams, lawyers: lawyers });
+            setView('auth');
+          } else {
+            setView('booking');
+          }
+        }}
+        onBackToChat={()=> setView('landing')}
       />}
-      {view === 'auth' && <AuthScreen onLogin={handleLogin} onRegister={handleRegister} />}
-      {view === 'booking' && selectedLawyer && <BookingFlow lawyer={selectedLawyer} user={user} existingBookings={bookings} onConfirm={async (b)=>{ await axios.post('/api/bookings', b); fetchBookings(); setView('client-dash'); }} />}
+      {view === 'auth' && <AuthScreen onLogin={handleLogin} onRegister={handleRegister} onBackToResults={previousSearch ? () => {
+        setSearchParams(previousSearch.params);
+        setLawyers(previousSearch.lawyers);
+        setView('results');
+      } : null} />}
+      {view === 'booking' && selectedLawyer && <BookingFlow lawyer={selectedLawyer} user={user} existingBookings={bookings} onConfirm={async (b)=>{ await axios.post('/api/bookings', b); fetchBookings(); setView('booking-confirmed'); }} />}
+      {view === 'booking-confirmed' && <div className="card" style={{textAlign:'center',padding:40}}>
+        <h2>Booking Confirmed!</h2>
+        <p>Your consultation has been successfully booked with {selectedLawyer?.name}.</p>
+        <div style={{marginTop:20}}>
+          <button className="btn" onClick={()=>{ setSelectedLawyer(null); setView('results'); }}>← Back to Lawyer Search</button>
+          <button className="btn" onClick={()=>setView(user && user.role==='lawyer' ? 'lawyer-dash' : 'client-dash')}>Go to Dashboard</button>
+        </div>
+      </div>}
       {view === 'client-dash' && <ClientDashboard user={user} bookings={bookings} onJoinCall={()=>setView('video')} onSearch={()=>setView('landing')} />}
       {view === 'lawyer-dash' && <LawyerDashboard user={user} bookings={bookings} onJoinCall={()=>setView('video')} onDraft={()=>setView('drafting')} />}
       {view === 'video' && <VideoRoom onEnd={()=>setView(user && user.role==='lawyer' ? 'lawyer-dash' : 'client-dash')} />}

@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function LawyerResults({ lawyers, params, onSelect }) {
+export default function LawyerResults({ lawyers, params, onSelect, onBackToChat }) {
   const getMatchBadge = (lawyer) => {
     if (!lawyer.matchScore) return null;
     
@@ -52,6 +52,7 @@ export default function LawyerResults({ lawyers, params, onSelect }) {
                   <div style={{fontSize:11,color:'#6b7280'}}>{l.experience} years exp.</div>
                 </div>
                 <button className="btn" onClick={()=>onSelect(l)}>Book Now</button>
+               
               </div>
             </div>
           ))}
@@ -62,41 +63,50 @@ export default function LawyerResults({ lawyers, params, onSelect }) {
 
   return (
     <div>
-      <div style={{marginBottom:12}}>
-        <h2>Search Results</h2>
-        <p>Location: <strong>{params.location}</strong> | Case Type: <strong>{params.type}</strong></p>
-        {params.analysis && (
-          <div className="card" style={{background:'#f8fafc',borderLeft:'4px solid #2563eb',marginBottom:12}}>
-            <div style={{fontWeight:700,color:'#1e40af'}}>AI Case Analysis</div>
-            <div style={{fontSize:14,marginBottom:4}}>
-              <strong>Specialization:</strong> {params.analysis.specialization || params.analysis.caseType}
-              {params.analysis.subSpecialty && params.analysis.subSpecialty !== 'General Practice' &&
-                <span> • <strong>Sub-specialty:</strong> {params.analysis.subSpecialty}</span>
-              }
-            </div>
-            <div style={{fontSize:14,marginBottom:4}}>
-              <strong>Severity:</strong>
-              <span style={{
-                color: params.analysis.severity === 'High' ? '#dc2626' :
-                       params.analysis.severity === 'Medium' ? '#f59e0b' : '#10b981',
-                fontWeight: 600
-              }}> {params.analysis.severity}</span>
-              {params.analysis.urgency && params.analysis.urgency !== 'Normal' &&
-                <span> • <strong>Urgency:</strong>
-                  <span style={{
-                    color: params.analysis.urgency === 'Immediate' ? '#dc2626' :
-                           params.analysis.urgency === 'High' ? '#f59e0b' : '#10b981',
-                    fontWeight: 600
-                  }}> {params.analysis.urgency}</span>
-                </span>
-              }
-            </div>
-            <div style={{fontSize:14}}><strong>Description:</strong> {params.analysis.description}</div>
-          </div>
-        )}
+      <div style={{marginBottom:12, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+        <div>
+          <h2>Search Results</h2>
+          <p>Location: <strong>{params.location}</strong> | Case Type: <strong>{params.type}</strong></p>
+        </div>
+        <button 
+          className="btn" 
+          onClick={onBackToChat}
+          style={{backgroundColor:'#6b7280', padding:'8px 16px'}}
+        >
+          ← Back to Chat
+        </button>
       </div>
+      {params.analysis && (
+        <div className="card" style={{background:'#f8fafc',borderLeft:'4px solid #2563eb',marginBottom:12}}>
+          <div style={{fontWeight:700,color:'#1e40af'}}>AI Case Analysis</div>
+          <div style={{fontSize:14,marginBottom:4}}>
+            <strong>Specialization:</strong> {params.analysis.specialization || params.analysis.caseType}
+            {params.analysis.subSpecialty && params.analysis.subSpecialty !== 'General Practice' &&
+              <span> • <strong>Sub-specialty:</strong> {params.analysis.subSpecialty}</span>
+            }
+          </div>
+          <div style={{fontSize:14,marginBottom:4}}>
+            <strong>Severity:</strong>
+            <span style={{
+              color: params.analysis.severity === 'High' ? '#dc2626' :
+                     params.analysis.severity === 'Medium' ? '#f59e0b' : '#10b981',
+              fontWeight: 600
+            }}> {params.analysis.severity}</span>
+            {params.analysis.urgency && params.analysis.urgency !== 'Normal' &&
+              <span> • <strong>Urgency:</strong>
+                <span style={{
+                  color: params.analysis.urgency === 'Immediate' ? '#dc2626' :
+                           params.analysis.urgency === 'High' ? '#f59e0b' : '#10b981',
+                  fontWeight: 600
+                }}> {params.analysis.urgency}</span>
+              </span>
+            }
+          </div>
+          <div style={{fontSize:14}}><strong>Description:</strong> {params.analysis.description}</div>
+        </div>
+      )}
       
-      {lawyers.length===0 ? (
+      {lawyers.length === 0 ? (
         <div className="card" style={{textAlign:'center',padding:40}}>
           <h3>No Specialized Lawyers Found</h3>
           <p>{params.analysis ?
