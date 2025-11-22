@@ -71,9 +71,29 @@ export default function LandingChat({ onSearchComplete }) {
             const data = await response.json();
             
             if (data.totalMatches > 0) {
+              const exactCount = data.exactMatches ? data.exactMatches.length : 0;
+              const relatedCount = data.relatedMatches ? data.relatedMatches.length : 0;
+              let message = `Based on your case description, I've identified this as a **${data.analysis.caseType}** matter`;
+              
+              if (data.analysis.subSpecialty && data.analysis.subSpecialty !== 'General Practice') {
+                message += ` requiring expertise in **${data.analysis.subSpecialty}**`;
+              }
+              
+              message += `. ${data.analysis.description}. `;
+              
+              if (exactCount > 0) {
+                message += `I found ${exactCount} lawyer${exactCount > 1 ? 's' : ''} with exact sub-specialty matching`;
+                if (relatedCount > 0) {
+                  message += ` and ${relatedCount} with related expertise`;
+                }
+              } else {
+                message += `I found ${data.totalMatches} specialized lawyer${data.totalMatches > 1 ? 's' : ''}`;
+              }
+              message += ` in ${cityMsg}. Showing you the best matches...`;
+              
               setMessages(m => [...m, {
                 role:'ai',
-                text: `Based on your case description, I've identified this as a **${data.analysis.category}** matter (${data.analysis.caseType} law). ${data.analysis.description}. I found ${data.totalMatches} specialized lawyers in ${cityMsg}. Showing you the best matches...`
+                text: message
               }]);
               
               // Call parent with the matching lawyers
@@ -82,13 +102,16 @@ export default function LandingChat({ onSearchComplete }) {
                   location: cityMsg,
                   type: data.analysis.caseType,
                   lawyers: data.matchingLawyers,
-                  analysis: data.analysis
+                  analysis: data.analysis,
+                  exactMatches: data.exactMatches,
+                  relatedMatches: data.relatedMatches,
+                  generalMatches: data.generalMatches
                 });
               }, 1500);
             } else {
               setMessages(m => [...m, {
                 role:'ai',
-                text: `Based on your case description, I've identified this as a **${data.analysis.category}** matter (${data.analysis.caseType} law). However, I couldn't find any specialized lawyers in ${cityMsg}. Would you like to see all available lawyers in ${cityMsg} or try a different city?`
+                text: `Based on your case description, I've identified this as a **${data.analysis.caseType}** matter. However, I couldn't find any specialized lawyers in ${cityMsg}. Would you like to see all available lawyers in ${cityMsg} or try a different city?`
               }]);
             }
           } catch (error) {

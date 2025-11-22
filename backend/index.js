@@ -145,29 +145,68 @@ app.post("/api/analyze-case", async (req, res) => {
 
   try {
     const prompt = `
-    You are a legal AI assistant specializing in Indian law. Analyze the following case description and categorize it accurately:
+    You are a legal AI assistant specializing in Indian law. Analyze the following case description and determine the exact lawyer specialization and sub-specialty needed.
 
     Case Description: "${caseDescription}"
     
     Please respond with a JSON object in this exact format:
     {
-      "caseType": "Family|Criminal|Property|Corporate|Cyber|Civil|General",
-      "category": "Brief category name",
+      "specialization": "Family|Criminal|Property|Corporate|Cyber|Civil",
+      "subSpecialty": "Specific sub-specialty name (e.g., 'Murder & Homicide', 'Divorce & Custody', 'Real Estate Disputes')",
       "severity": "High|Medium|Low",
+      "urgency": "Immediate|High|Normal|Low",
       "description": "Brief description of the legal matter",
-      "keywords": ["keyword1", "keyword2", "keyword3"]
+      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "caseType": "Brief category name"
     }
     
-    Rules for Indian legal cases:
-    - "Family" for divorce, separation, marriage, custody, child support, alimony, domestic violence, inheritance, will disputes, adoption, maintenance
-    - "Criminal" for murder, homicide, killing, assault, theft, robbery, fraud, cheating, dowry death, rape, molestation, narcotics, white collar crimes, cyber crimes
-    - "Property" for land disputes, real estate, property ownership, rental disputes, lease agreements, builder disputes, property registration, title issues
-    - "Corporate" for business contracts, company law, startup issues, mergers & acquisitions, intellectual property, taxation, GST, labor law, employment disputes
-    - "Cyber" for online fraud, data privacy, hacking, cyber security, online scams, digital evidence, cyber stalking, IT Act violations
-    - "Civil" for personal injury, accidents, compensation claims, medical negligence, consumer disputes, contract disputes, defamation, tort claims
-    - "General" only if none of the above categories fit
+    Rules for Indian legal cases and sub-specialties:
     
-    Consider the context of Indian legal system and common case types in India.
+    FAMILY LAW:
+    - "Divorce & Custody" for divorce, separation, child custody, alimony
+    - "Marriage & Divorce" for marriage issues, divorce proceedings
+    - "Child Custody & Support" for child custody, child support, maintenance
+    - "Domestic Violence & Protection" for domestic violence, protection orders
+    - "Inheritance & Will Disputes" for inheritance, will disputes, succession
+    - "Family Dispute Resolution" for family mediation, dispute resolution
+    - "Adoption & Guardianship" for adoption, guardianship matters
+    
+    CRIMINAL LAW:
+    - "Murder & Homicide" for murder, homicide, killing cases
+    - "Assault & Violence" for assault, violence, domestic abuse
+    - "Theft & Robbery" for theft, robbery, burglary, stealing
+    - "White Collar Crimes" for financial fraud, embezzlement, corporate crimes
+    - "Narcotics & Drug Cases" for drug offenses, narcotics cases
+    - "Cyber Crime & Hacking" for cyber crimes, hacking, IT violations
+    
+    PROPERTY LAW:
+    - "Real Estate Disputes" for real estate disputes, property conflicts
+    - "Land Disputes & Title Issues" for land disputes, title verification
+    - "Rental & Lease Agreements" for rental disputes, lease issues
+    - "Property Registration" for property registration, documentation
+    - "Construction & Builder Disputes" for construction disputes, builder issues
+    
+    CORPORATE LAW:
+    - "Business Contracts" for business contracts, commercial agreements
+    - "Company Formation & Compliance" for company registration, compliance
+    - "Mergers & Acquisitions" for M&A, business acquisitions
+    - "Intellectual Property" for patents, trademarks, copyright
+    - "Startup & Venture Capital" for startup incorporation, venture capital
+    - "Taxation & GST" for tax matters, GST compliance
+    
+    CYBER LAW:
+    - "Cyber Crime & Hacking" for cyber crimes, hacking offenses
+    - "Data Privacy & Security" for data privacy, security breaches
+    - "Online Fraud & Scams" for online fraud, cyber scams
+    
+    CIVIL LAW:
+    - "Personal Injury & Accidents" for injury claims, accident compensation
+    - "Consumer Disputes" for consumer rights, product liability
+    - "Contract Disputes" for breach of contract, commercial disputes
+    - "Employment & Labor Law" for employment disputes, labor issues
+    - "Medical Negligence" for medical malpractice, negligence cases
+    
+    Consider the context of Indian legal system and be precise in determining the sub-specialty.
     `;
 
     const result = await model.generateContent(prompt);
@@ -182,116 +221,207 @@ app.post("/api/analyze-case", async (req, res) => {
 
     const analysis = JSON.parse(jsonMatch[0]);
 
-    // Find matching lawyers in the specified city
+    // Find and score matching lawyers in the specified city
     const db = readDB();
     console.log("=== DEBUG INFO ===");
     console.log("City:", city);
     console.log("Analysis:", analysis);
     console.log("Total lawyers in DB:", db.lawyers.length);
 
-    const matchingLawyers = db.lawyers.filter((lawyer) => {
-      const cityMatch = lawyer.location
-        .toLowerCase()
-        .includes(city.toLowerCase());
-      const specializationMatch = lawyer.specialization === analysis.caseType;
-      console.log(
-        `Lawyer: ${lawyer.name}, Location: ${lawyer.location}, Specialization: ${lawyer.specialization}, City Match: ${cityMatch}, Specialization Match: ${specializationMatch}`
-      );
-      return cityMatch && specializationMatch;
-    });
+    const scoredLawyers = db.lawyers
+      .filter((lawyer) => {
+        const cityMatch = lawyer.location
+          .toLowerCase()
+          .includes(city.toLowerCase());
+        const specializationMatch = lawyer.specialization === analysis.specialization;
+        return cityMatch && specializationMatch;
+      })
+      .map((lawyer) => {
+        let score = 50; // Base score for matching specialization and city
+        
+        // Bonus for exact sub-specialty match
+        if (lawyer.sub_specialty.toLowerCase() === analysis.subSpecialty.toLowerCase()) {
+          score += 50;
+        }
+        // Partial match for sub-specialty containing keywords
+        else if (analysis.keywords.some(keyword =>
+            lawyer.sub_specialty.toLowerCase().includes(keyword.toLowerCase())
+        )) {
+          score += 25;
+        }
+        
+        // Bonus for high severity cases - prioritize experienced lawyers
+        if (analysis.severity === 'High' && lawyer.experience >= 10) {
+          score += 10;
+        }
+        
+        return {
+          ...lawyer,
+          matchScore: score,
+          matchReason: score >= 100 ? 'Exact sub-specialty match' :
+                      score >= 75 ? 'Related sub-specialty' :
+                      'Specialization match'
+        };
+      })
+      .sort((a, b) => b.matchScore - a.matchScore);
 
     console.log(
-      "Matching lawyers:",
-      matchingLawyers.map((l) => l.name)
+      "Scored lawyers:",
+      scoredLawyers.map((l) => `${l.name} (${l.matchScore}: ${l.matchReason})`)
     );
     console.log("==================");
 
+    // Group lawyers by match quality
+    const exactMatches = scoredLawyers.filter(l => l.matchScore >= 100);
+    const relatedMatches = scoredLawyers.filter(l => l.matchScore >= 75 && l.matchScore < 100);
+    const generalMatches = scoredLawyers.filter(l => l.matchScore < 75);
+
     res.json({
-      analysis,
-      matchingLawyers,
+      analysis: {
+        ...analysis,
+        caseType: analysis.specialization // Keep backward compatibility
+      },
+      matchingLawyers: scoredLawyers,
+      exactMatches,
+      relatedMatches,
+      generalMatches,
       city: city,
-      totalMatches: matchingLawyers.length,
+      totalMatches: scoredLawyers.length,
     });
   } catch (error) {
     console.error("Gemini API Error:", error);
 
-    // Fallback to basic keyword matching
+    // Enhanced fallback with sub-specialty detection
     const text = caseDescription.toLowerCase();
     let analysis = {
-      caseType: "General",
-      category: "Civil Matter",
+      specialization: "General",
+      subSpecialty: "General Practice",
       severity: "Medium",
+      urgency: "Normal",
       description: "Legal matter requiring professional consultation",
       keywords: [],
+      caseType: "Civil Matter"
     };
 
-    if (
-      text.includes("divorce") ||
-      text.includes("separation") ||
-      text.includes("marriage") ||
-      text.includes("custody") ||
-      text.includes("wife") ||
-      text.includes("husband")
-    ) {
+    // Enhanced keyword matching with sub-specialties
+    if (text.includes("kill") || text.includes("murder") || text.includes("homicide")) {
       analysis = {
-        caseType: "Family",
-        category: "Divorce/Separation",
-        severity: "Medium",
-        description: "Family law matter involving divorce or separation",
-        keywords: ["divorce", "family", "separation", "marriage"],
-      };
-    } else if (
-      text.includes("murder") ||
-      text.includes("homicide") ||
-      text.includes("killing")
-    ) {
-      analysis = {
-        caseType: "Criminal",
-        category: "Homicide",
+        specialization: "Criminal",
+        subSpecialty: "Murder & Homicide",
         severity: "High",
+        urgency: "Immediate",
         description: "Serious criminal matter involving homicide charges",
-        keywords: ["murder", "criminal", "homicide", "killing"],
+        keywords: ["murder", "homicide", "killing", "criminal"],
+        caseType: "Homicide"
       };
-    } else if (
-      text.includes("theft") ||
-      text.includes("stealing") ||
-      text.includes("robbery") ||
-      text.includes("burglary")
-    ) {
+    } else if (text.includes("divorce") || text.includes("separation") || text.includes("wife") || text.includes("husband")) {
       analysis = {
-        caseType: "Criminal",
-        category: "Theft/Robbery",
+        specialization: "Family",
+        subSpecialty: "Divorce & Custody",
         severity: "Medium",
+        urgency: "Normal",
+        description: "Family law matter involving divorce or separation",
+        keywords: ["divorce", "separation", "custody", "family"],
+        caseType: "Divorce/Separation"
+      };
+    } else if (text.includes("theft") || text.includes("stealing") || text.includes("robbery") || text.includes("burglary")) {
+      analysis = {
+        specialization: "Criminal",
+        subSpecialty: "Theft & Robbery",
+        severity: "Medium",
+        urgency: "High",
         description: "Criminal matter related to theft or robbery",
-        keywords: ["theft", "robbery", "criminal", "stealing", "burglary"],
+        keywords: ["theft", "robbery", "stealing", "burglary"],
+        caseType: "Theft/Robbery"
       };
-    } else if (
-      text.includes("property") ||
-      text.includes("land") ||
-      text.includes("real estate") ||
-      text.includes("house")
-    ) {
+    } else if (text.includes("property") || text.includes("land") || text.includes("real estate") || text.includes("house")) {
       analysis = {
-        caseType: "Property",
-        category: "Property Dispute",
+        specialization: "Property",
+        subSpecialty: "Real Estate Disputes",
         severity: "Medium",
+        urgency: "Normal",
         description: "Civil matter related to property or land disputes",
-        keywords: ["property", "civil", "land", "real estate"],
+        keywords: ["property", "land", "real estate", "house"],
+        caseType: "Property Dispute"
+      };
+    } else if (text.includes("contract") || text.includes("agreement") || text.includes("breach")) {
+      analysis = {
+        specialization: "Corporate",
+        subSpecialty: "Business Contracts",
+        severity: "Medium",
+        urgency: "Normal",
+        description: "Matter involving business contracts or agreements",
+        keywords: ["contract", "agreement", "business", "breach"],
+        caseType: "Contract Dispute"
+      };
+    } else if (text.includes("cyber") || text.includes("online") || text.includes("hacking") || text.includes("fraud")) {
+      analysis = {
+        specialization: "Cyber",
+        subSpecialty: "Cyber Crime & Hacking",
+        severity: "High",
+        urgency: "High",
+        description: "Matter involving cyber crime or online fraud",
+        keywords: ["cyber", "online", "hacking", "fraud"],
+        caseType: "Cyber Crime"
       };
     }
 
     const db = readDB();
-    const matchingLawyers = db.lawyers.filter(
-      (lawyer) =>
-        lawyer.location.toLowerCase().includes(city.toLowerCase()) &&
-        lawyer.specialization === analysis.caseType
-    );
+    
+    // Enhanced matching with scoring for fallback
+    const scoredLawyers = db.lawyers
+      .filter((lawyer) => {
+        const cityMatch = lawyer.location
+          .toLowerCase()
+          .includes(city.toLowerCase());
+        const specializationMatch = lawyer.specialization === analysis.specialization;
+        return cityMatch && specializationMatch;
+      })
+      .map((lawyer) => {
+        let score = 50; // Base score for matching specialization and city
+        
+        // Bonus for exact sub-specialty match
+        if (lawyer.sub_specialty.toLowerCase() === analysis.subSpecialty.toLowerCase()) {
+          score += 50;
+        }
+        // Partial match for sub-specialty containing keywords
+        else if (analysis.keywords.some(keyword =>
+            lawyer.sub_specialty.toLowerCase().includes(keyword.toLowerCase())
+        )) {
+          score += 25;
+        }
+        
+        // Bonus for high severity cases - prioritize experienced lawyers
+        if (analysis.severity === 'High' && lawyer.experience >= 10) {
+          score += 10;
+        }
+        
+        return {
+          ...lawyer,
+          matchScore: score,
+          matchReason: score >= 100 ? 'Exact sub-specialty match' :
+                      score >= 75 ? 'Related sub-specialty' :
+                      'Specialization match'
+        };
+      })
+      .sort((a, b) => b.matchScore - a.matchScore);
+
+    // Group lawyers by match quality
+    const exactMatches = scoredLawyers.filter(l => l.matchScore >= 100);
+    const relatedMatches = scoredLawyers.filter(l => l.matchScore >= 75 && l.matchScore < 100);
+    const generalMatches = scoredLawyers.filter(l => l.matchScore < 75);
 
     res.json({
-      analysis,
-      matchingLawyers,
+      analysis: {
+        ...analysis,
+        caseType: analysis.specialization // Keep backward compatibility
+      },
+      matchingLawyers: scoredLawyers,
+      exactMatches,
+      relatedMatches,
+      generalMatches,
       city: city,
-      totalMatches: matchingLawyers.length,
+      totalMatches: scoredLawyers.length,
       fallback: true,
     });
   }

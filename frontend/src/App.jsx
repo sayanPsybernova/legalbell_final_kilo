@@ -75,7 +75,11 @@ export default function App() {
       </div>
 
       {view === 'landing' && <LandingChat onSearchComplete={(p)=>{ setSearchParams(p); fetchLawyers(p); setView('results'); }} />}
-      {view === 'results' && <LawyerResults lawyers={lawyers} params={searchParams} onSelect={(l)=>{ setSelectedLawyer(l); if (!user) setView('auth'); else setView('booking'); }} />}
+      {view === 'results' && <LawyerResults
+        lawyers={lawyers}
+        params={searchParams}
+        onSelect={(l)=>{ setSelectedLawyer(l); if (!user) setView('auth'); else setView('booking'); }}
+      />}
       {view === 'auth' && <AuthScreen onLogin={handleLogin} onRegister={handleRegister} />}
       {view === 'booking' && selectedLawyer && <BookingFlow lawyer={selectedLawyer} user={user} existingBookings={bookings} onConfirm={async (b)=>{ await axios.post('/api/bookings', b); fetchBookings(); setView('client-dash'); }} />}
       {view === 'client-dash' && <ClientDashboard user={user} bookings={bookings} onJoinCall={()=>setView('video')} onSearch={()=>setView('landing')} />}
