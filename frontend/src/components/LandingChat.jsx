@@ -31,8 +31,50 @@ export default function LandingChat({ onSearchComplete }) {
     let response = ""
     let newState = { ...state }
     
+    // Check for complete information in one sentence (first priority)
+    if (!state.consultationType || !state.city) {
+      const onlineKw = ['online','virtual','remote','video','call']
+      const offlineKw = ['offline','in-person','person','office','physical','face to face','face-to-face','ofline']
+      const isOnline = onlineKw.some(k => lowerText.includes(k))
+      const isOffline = offlineKw.some(k => lowerText.includes(k))
+      
+      // Check if user provided all info in one sentence
+      if ((isOnline || isOffline) && !state.consultationType) {
+        newState.consultationType = isOnline ? 'online' : 'offline'
+        
+        // Look for city in the same sentence
+        const foundCity = INDIAN_CITIES.find(c => lowerText.includes(c))
+        if (foundCity && !state.city) {
+          newState.city = foundCity.charAt(0).toUpperCase() + foundCity.slice(1)
+          response = `Perfect! ${isOnline ? 'Online' : 'Offline'} consultation it is in ${newState.city}. Now, please briefly describe your legal issue (for example: divorce case, property dispute, criminal matter, etc.).`
+          
+          // Check if case description is also in the same sentence
+          const words = originalText.split(' ')
+          const caseDescWords = words.filter(word => 
+            word.length > 3 && 
+            !onlineKw.some(k => word.toLowerCase().includes(k)) && 
+            !offlineKw.some(k => word.toLowerCase().includes(k)) &&
+            !INDIAN_CITIES.some(c => word.toLowerCase().includes(c)) &&
+            !word.toLowerCase().includes('need') &&
+            !word.toLowerCase().includes('from') &&
+            !word.toLowerCase().includes('lawer') &&
+            !word.toLowerCase().includes('lawyer') &&
+            !word.toLowerCase().includes('lwyer')
+          )
+          
+          if (caseDescWords.length > 0) {
+            newState.caseDescription = caseDescWords.join(' ')
+            response = `Perfect! I have all your information: ${isOnline ? 'online' : 'offline'} consultation in ${newState.city} for ${caseDescWords.join(' ')}. Analyzing your case...`
+            setTimeout(() => analyzeCase(newState), 1500)
+          }
+        } else {
+          response = `Perfect! ${isOnline ? 'Online' : 'Offline'} consultation it is. Which city are you in?`
+        }
+      }
+    }
+    
     // Check for change requests - more comprehensive detection
-    const changeIndicators = ['change', 'different', 'wrong', 'instead', 'rather', 'nono', 'no no', 'actually', 'wait', 'prefer', 'pereferd', 'can you', 'i want']
+    const changeIndicators = ['change', 'different', 'wrong', 'instead', 'rather', 'nono', 'no no', 'actually', 'acrtually', 'wait', 'prefer', 'pereferd', 'can you', 'i want', 'switch', 'mode', 'for']
     const isChangeRequest = changeIndicators.some(indicator => lowerText.includes(indicator))
     
     // Check for consultation type change first (highest priority)
@@ -55,9 +97,12 @@ export default function LandingChat({ onSearchComplete }) {
         newState.consultationType = newMode
       }
       
-      // Check for city change
+      // Check for city change - improved pattern matching
       const foundCity = INDIAN_CITIES.find(c => lowerText.includes(c))
-      if (foundCity || lowerText.includes('city') || lowerText.includes('location') || lowerText.includes('lawer') || lowerText.includes('lawyer') || lowerText.includes('from')) {
+      const cityIndicators = ['city', 'location', 'lawer', 'lawyer', 'from']
+      const hasCityIndicator = cityIndicators.some(indicator => lowerText.includes(indicator))
+      
+      if (foundCity || hasCityIndicator) {
         hasCityChange = true
         if (foundCity) {
           newCity = foundCity.charAt(0).toUpperCase() + foundCity.slice(1)
@@ -171,8 +216,35 @@ export default function LandingChat({ onSearchComplete }) {
     setMessages(m => [...m, { role: 'ai', text: response }])
   }
 
+  // Use Gemini API for intelligent conversation understanding
+  const getAIResponse = async (userMessage, currentState) => {
+    try {
+      const response = await fetch('/api/analyze-case', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          caseDescription: currentState.caseDescription || userMessage,
+          city: currentState.city,
+          context: `User is asking: "${userMessage}". Current state: consultationType=${currentState.consultationType}, city=${currentState.city}, caseDescription=${currentState.caseDescription}`,
+          useGeminiForResponse: true // Flag to use Gemini for intelligent response
+        })
+      });
+      
+      const data = await response.json();
+      return data.geminiResponse || data.analysis;
+    } catch (error) {
+      console.error("Gemini API Error:", error);
+      return null;
+    }
+  }
+
   const analyzeCase = async (state) => {
     try {
+      console.log("Analyzing case with state:", state);
+      
+      // Direct API call to analyze case
       const response = await fetch('/api/analyze-case', {
         method: 'POST',
         headers: {
@@ -184,62 +256,47 @@ export default function LandingChat({ onSearchComplete }) {
         })
       });
       
-      const data = await response.json();
+      console.log("API response status:", response.status);
       
-      if (data.totalMatches > 0) {
-        const exactCount = data.exactMatches ? data.exactMatches.length : 0;
-        const relatedCount = data.relatedMatches ? data.relatedMatches.length : 0;
-        let message = `Based on your case description, I've identified this as a **${data.analysis.caseType}** matter`;
-        
-        if (data.analysis.subSpecialty && data.analysis.subSpecialty !== 'General Practice') {
-          message += ` requiring expertise in **${data.analysis.subSpecialty}**`;
-        }
-        
-        message += `. ${data.analysis.description}. `;
-        
-        if (exactCount > 0) {
-          message += `I found ${exactCount} lawyer${exactCount > 1 ? 's' : ''} with exact sub-specialty matching`;
-          if (relatedCount > 0) {
-            message += ` and ${relatedCount} with related expertise`;
-          }
-        } else {
-          message += `I found ${data.totalMatches} specialized lawyer${data.totalMatches > 1 ? 's' : ''}`;
-        }
-        message += ` in ${state.city}. Showing you the best matches...`;
-        
-        setMessages(m => [...m, {
-          role:'ai',
-          text: message
-        }]);
-        
-        // Call parent with the matching lawyers
-        setTimeout(() => {
-          onSearchComplete({
-            location: state.city,
-            type: data.analysis.caseType,
-            lawyers: data.matchingLawyers,
-            analysis: data.analysis,
-            exactMatches: data.exactMatches,
-            relatedMatches: data.relatedMatches,
-            generalMatches: data.generalMatches
-          });
-        }, 1500);
-      } else {
-        setMessages(m => [...m, {
-          role:'ai',
-          text: `Based on your case description, I've identified this as a **${data.analysis.caseType}** matter. However, I couldn't find any specialized lawyers in ${state.city}. Would you like to see all available lawyers in ${state.city} or try a different city?`
-        }]);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } catch (error) {
+      
+      const data = await response.json();
+      console.log("API response data:", data);
+      
       setMessages(m => [...m, {
         role:'ai',
-        text: "I'm having trouble analyzing your case right now. Let me connect you with general lawyers in your area..."
+        text: data.analysis.description || data.analysis.caseType || "I've analyzed your case and found matching lawyers."
       }]);
       
-      // Fallback to original behavior
       setTimeout(() => {
-        onSearchComplete({ location: state.city, type: 'General' });
-      }, 1500);
+        console.log("Calling onSearchComplete with:", {
+          location: state.city,
+          type: data.analysis.caseType || data.analysis.specialization || 'General',
+          lawyers: data.matchingLawyers || [],
+          analysis: data.analysis,
+          exactMatches: data.exactMatches,
+          relatedMatches: data.relatedMatches,
+          generalMatches: data.generalMatches
+        });
+        
+        onSearchComplete({
+          location: state.city,
+          type: data.analysis.caseType || data.analysis.specialization || 'General',
+          lawyers: data.matchingLawyers || [],
+          analysis: data.analysis,
+          exactMatches: data.exactMatches,
+          relatedMatches: data.relatedMatches,
+          generalMatches: data.generalMatches
+        });
+      }, 2000);
+    } catch (error) {
+      console.error("Error analyzing case:", error);
+      setMessages(m => [...m, {
+        role:'ai',
+        text: "I'm sorry, I encountered an error while analyzing your case. Please try again."
+      }]);
     }
   }
 

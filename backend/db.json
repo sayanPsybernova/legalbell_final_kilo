@@ -637,6 +637,138 @@
       "fee": 500,
       "image": "https://i.pravatar.cc/150?u=58",
       "about": "Specializes in theft, robbery, and property crime cases in Kolkata."
+    },
+    {
+      "id": 59,
+      "name": "Adv. Ramesh Gupta",
+      "specialization": "Property",
+      "sub_specialty": "Land Disputes & Title Issues",
+      "experience": 18,
+      "location": "Mumbai",
+      "fee": 1200,
+      "image": "https://i.pravatar.cc/150?u=59",
+      "about": "Highly experienced in complex land disputes, title verification, and partition suits involving family property."
+    },
+    {
+      "id": 60,
+      "name": "Adv. Suresh Patil",
+      "specialization": "Property",
+      "sub_specialty": "Land Disputes & Title Issues",
+      "experience": 12,
+      "location": "Pune",
+      "fee": 800,
+      "image": "https://i.pravatar.cc/150?u=60",
+      "about": "Specialist in ancestral property disputes and family land partition cases."
+    },
+    {
+      "id": 61,
+      "name": "Adv. Anand Desai",
+      "specialization": "Property",
+      "sub_specialty": "Land Disputes & Title Issues",
+      "experience": 15,
+      "location": "Delhi",
+      "fee": 1000,
+      "image": "https://i.pravatar.cc/150?u=61",
+      "about": "Expert in property title disputes and illegal occupation cases."
+    },
+    {
+      "id": 62,
+      "name": "Adv. Meera Krishnan",
+      "specialization": "Property",
+      "sub_specialty": "Land Disputes & Title Issues",
+      "experience": 10,
+      "location": "Bangalore",
+      "fee": 700,
+      "image": "https://i.pravatar.cc/150?u=62",
+      "about": "Focused on real estate disputes and property ownership conflicts."
+    },
+    {
+      "id": 63,
+      "name": "Adv. Rajesh Verma",
+      "specialization": "Property",
+      "sub_specialty": "Land Disputes & Title Issues",
+      "experience": 14,
+      "location": "Hyderabad",
+      "fee": 900,
+      "image": "https://i.pravatar.cc/150?u=63",
+      "about": "Specialized in joint property disputes and family partition matters."
+    },
+    {
+      "id": 64,
+      "name": "Adv. Anita Rao",
+      "specialization": "Property",
+      "sub_specialty": "Land Disputes & Title Issues",
+      "experience": 8,
+      "location": "Chennai",
+      "fee": 600,
+      "image": "https://i.pravatar.cc/150?u=64",
+      "about": "Young lawyer specializing in property title verification and dispute resolution."
+    },
+    {
+      "id": 65,
+      "name": "Adv. Vikram Reddy",
+      "specialization": "Property",
+      "sub_specialty": "Land Disputes & Title Issues",
+      "experience": 11,
+      "location": "Kolkata",
+      "fee": 750,
+      "image": "https://i.pravatar.cc/150?u=65",
+      "about": "Expert in property possession cases and ownership disputes."
+    },
+    {
+      "id": 66,
+      "name": "Adv. Pooja Sharma",
+      "specialization": "Property",
+      "sub_specialty": "Land Disputes & Title Issues",
+      "experience": 9,
+      "location": "Ahmedabad",
+      "fee": 550,
+      "image": "https://i.pravatar.cc/150?u=66",
+      "about": "Specializes in ancestral property disputes and family land matters."
+    },
+    {
+      "id": 67,
+      "name": "Adv. Sanjay Mehta",
+      "specialization": "Property",
+      "sub_specialty": "Land Disputes & Title Issues",
+      "experience": 16,
+      "location": "Jaipur",
+      "fee": 850,
+      "image": "https://i.pravatar.cc/150?u=67",
+      "about": "Senior property lawyer with extensive experience in partition suits and title disputes."
+    },
+    {
+      "id": 68,
+      "name": "Adv. Kiran Patel",
+      "specialization": "Civil",
+      "sub_specialty": "Property Partition Suits",
+      "experience": 13,
+      "location": "Mumbai",
+      "fee": 900,
+      "image": "https://i.pravatar.cc/150?u=68",
+      "about": "Expert in civil litigation for property partition and family settlement matters."
+    },
+    {
+      "id": 69,
+      "name": "Adv. Arvind Kumar",
+      "specialization": "Civil",
+      "sub_specialty": "Property Partition Suits",
+      "experience": 10,
+      "location": "Delhi",
+      "fee": 700,
+      "image": "https://i.pravatar.cc/150?u=69",
+      "about": "Specializes in civil cases related to property division and family settlements."
+    },
+    {
+      "id": 70,
+      "name": "Adv. Lakshmi Nair",
+      "specialization": "Family",
+      "sub_specialty": "Property Division in Family Matters",
+      "experience": 11,
+      "location": "Bangalore",
+      "fee": 650,
+      "image": "https://i.pravatar.cc/150?u=70",
+      "about": "Family law expert handling property division in divorce and inheritance cases."
     }
   ],
   "bookings": [],

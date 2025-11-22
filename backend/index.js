@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 const DB_FILE = path.join(__dirname, "db.json");
 
 // Initialize Gemini AI
-const genAI = new GoogleGenerativeAI("AIzaSyASbci512GXBFtrFX30nGmuUCiqYYjvU1Y");
+const genAI = new GoogleGenerativeAI("AIzaSyD2fD3IeBNvGq5P6pJEmHoYAYmsH-fDKaY");
 const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
 function readDB() {
@@ -179,9 +179,9 @@ app.post("/api/analyze-case", async (req, res) => {
     - "Narcotics & Drug Cases" for drug offenses, narcotics cases
     - "Cyber Crime & Hacking" for cyber crimes, hacking, IT violations
     
-    PROPERTY LAW:
-    - "Real Estate Disputes" for real estate disputes, property conflicts
-    - "Land Disputes & Title Issues" for land disputes, title verification
+    PROPERTY LAW (CRITICAL - Pay special attention to these patterns):
+    - "Land Disputes & Title Issues" for land disputes, title verification, boundary disputes, ownership conflicts, illegal occupation, property takeover, brother/sister/family property disputes, ancestral property, joint property, partition suits, property possession issues
+    - "Real Estate Disputes" for real estate disputes, property conflicts, buyer-seller disputes
     - "Rental & Lease Agreements" for rental disputes, lease issues
     - "Property Registration" for property registration, documentation
     - "Construction & Builder Disputes" for construction disputes, builder issues
@@ -205,6 +205,12 @@ app.post("/api/analyze-case", async (req, res) => {
     - "Contract Disputes" for breach of contract, commercial disputes
     - "Employment & Labor Law" for employment disputes, labor issues
     - "Medical Negligence" for medical malpractice, negligence cases
+    
+    SPECIAL ATTENTION TO PROPERTY DISPUTES:
+    - Any mention of "brother", "sister", "family", "relative" taking property = "Land Disputes & Title Issues"
+    - Any mention of "half plot", "share", "portion", "partition" = "Land Disputes & Title Issues"
+    - Any mention of "illegal occupation", "taken over", "occupied" = "Land Disputes & Title Issues"
+    - Any mention of "ancestral property", "joint property", "family property" = "Land Disputes & Title Issues"
     
     Consider the context of Indian legal system and be precise in determining the sub-specialty.
     `;
@@ -239,27 +245,83 @@ app.post("/api/analyze-case", async (req, res) => {
       .map((lawyer) => {
         let score = 50; // Base score for matching specialization and city
         
-        // Bonus for exact sub-specialty match
-        if (lawyer.sub_specialty.toLowerCase() === analysis.subSpecialty.toLowerCase()) {
-          score += 50;
-        }
-        // Partial match for sub-specialty containing keywords
-        else if (analysis.keywords.some(keyword =>
-            lawyer.sub_specialty.toLowerCase().includes(keyword.toLowerCase())
-        )) {
-          score += 25;
+        // Enhanced matching for property disputes
+        if (analysis.specialization === 'Property') {
+          // Exact sub-specialty match gets highest bonus
+          if (lawyer.sub_specialty.toLowerCase() === analysis.subSpecialty.toLowerCase()) {
+            score += 50;
+          }
+          // Special bonus for "Land Disputes & Title Issues" - this is the most relevant for property disputes
+          else if (lawyer.sub_specialty.toLowerCase().includes('land disputes') ||
+                   lawyer.sub_specialty.toLowerCase().includes('title issues') ||
+                   lawyer.sub_specialty.toLowerCase().includes('partition')) {
+            score += 40;
+          }
+          // Bonus for related property sub-specialties
+          else if (lawyer.sub_specialty.toLowerCase().includes('property') ||
+                   lawyer.sub_specialty.toLowerCase().includes('real estate')) {
+            score += 30;
+          }
+          // Bonus for civil lawyers with property partition expertise
+          else if (lawyer.specialization === 'Civil' &&
+                   (lawyer.sub_specialty.toLowerCase().includes('partition') ||
+                    lawyer.sub_specialty.toLowerCase().includes('property'))) {
+            score += 25;
+          }
+          // Bonus for family lawyers with property division expertise
+          else if (lawyer.specialization === 'Family' &&
+                   lawyer.sub_specialty.toLowerCase().includes('property')) {
+            score += 20;
+          }
+          // Keyword matching in sub-specialty
+          else if (analysis.keywords.some(keyword =>
+              lawyer.sub_specialty.toLowerCase().includes(keyword.toLowerCase())
+          )) {
+            score += 15;
+          }
+        } else {
+          // Original logic for non-property cases
+          // Bonus for exact sub-specialty match
+          if (lawyer.sub_specialty.toLowerCase() === analysis.subSpecialty.toLowerCase()) {
+            score += 50;
+          }
+          // Partial match for sub-specialty containing keywords
+          else if (analysis.keywords.some(keyword =>
+              lawyer.sub_specialty.toLowerCase().includes(keyword.toLowerCase())
+          )) {
+            score += 25;
+          }
         }
         
-        // Bonus for high severity cases - prioritize experienced lawyers
-        if (analysis.severity === 'High' && lawyer.experience >= 10) {
+        // Enhanced experience bonus for property disputes
+        if (analysis.specialization === 'Property' && analysis.severity === 'High') {
+          if (lawyer.experience >= 15) {
+            score += 15; // Higher bonus for very experienced lawyers
+          } else if (lawyer.experience >= 10) {
+            score += 10;
+          } else if (lawyer.experience >= 5) {
+            score += 5;
+          }
+        }
+        // Standard experience bonus for other cases
+        else if (analysis.severity === 'High' && lawyer.experience >= 10) {
           score += 10;
+        }
+        
+        // Bonus for high urgency cases - prioritize lawyers with reasonable fees
+        if (analysis.urgency === 'Immediate' || analysis.urgency === 'High') {
+          if (lawyer.fee <= 1000) {
+            score += 5; // Small bonus for affordable lawyers in urgent cases
+          }
         }
         
         return {
           ...lawyer,
           matchScore: score,
           matchReason: score >= 100 ? 'Exact sub-specialty match' :
+                      score >= 85 ? 'Highly relevant sub-specialty' :
                       score >= 75 ? 'Related sub-specialty' :
+                      score >= 65 ? 'Partial specialization match' :
                       'Specialization match'
         };
       })
@@ -334,15 +396,20 @@ app.post("/api/analyze-case", async (req, res) => {
         keywords: ["theft", "robbery", "stealing", "burglary"],
         caseType: "Theft/Robbery"
       };
-    } else if (text.includes("property") || text.includes("land") || text.includes("real estate") || text.includes("house")) {
+    } else if (text.includes("property") || text.includes("land") || text.includes("real estate") || text.includes("house") ||
+               text.includes("brother") || text.includes("sister") || text.includes("family") || text.includes("relative") ||
+               text.includes("half plot") || text.includes("share") || text.includes("portion") || text.includes("partition") ||
+               text.includes("illegal occupation") || text.includes("taken over") || text.includes("occupied") || text.includes("ancestral") ||
+               text.includes("joint property") || text.includes("take") || text.includes("took") || text.includes("occupied") ||
+               text.includes("possession") || text.includes("ownership") || text.includes("title")) {
       analysis = {
         specialization: "Property",
-        subSpecialty: "Real Estate Disputes",
-        severity: "Medium",
-        urgency: "Normal",
-        description: "Civil matter related to property or land disputes",
-        keywords: ["property", "land", "real estate", "house"],
-        caseType: "Property Dispute"
+        subSpecialty: "Land Disputes & Title Issues",
+        severity: "High",
+        urgency: "High",
+        description: "Property dispute involving ownership, title, or possession issues",
+        keywords: ["property", "land", "dispute", "title", "possession", "ownership", "family", "partition"],
+        caseType: "Property Title Dispute"
       };
     } else if (text.includes("contract") || text.includes("agreement") || text.includes("breach")) {
       analysis = {
@@ -380,27 +447,83 @@ app.post("/api/analyze-case", async (req, res) => {
       .map((lawyer) => {
         let score = 50; // Base score for matching specialization and city
         
-        // Bonus for exact sub-specialty match
-        if (lawyer.sub_specialty.toLowerCase() === analysis.subSpecialty.toLowerCase()) {
-          score += 50;
-        }
-        // Partial match for sub-specialty containing keywords
-        else if (analysis.keywords.some(keyword =>
-            lawyer.sub_specialty.toLowerCase().includes(keyword.toLowerCase())
-        )) {
-          score += 25;
+        // Enhanced matching for property disputes
+        if (analysis.specialization === 'Property') {
+          // Exact sub-specialty match gets highest bonus
+          if (lawyer.sub_specialty.toLowerCase() === analysis.subSpecialty.toLowerCase()) {
+            score += 50;
+          }
+          // Special bonus for "Land Disputes & Title Issues" - this is the most relevant for property disputes
+          else if (lawyer.sub_specialty.toLowerCase().includes('land disputes') ||
+                   lawyer.sub_specialty.toLowerCase().includes('title issues') ||
+                   lawyer.sub_specialty.toLowerCase().includes('partition')) {
+            score += 40;
+          }
+          // Bonus for related property sub-specialties
+          else if (lawyer.sub_specialty.toLowerCase().includes('property') ||
+                   lawyer.sub_specialty.toLowerCase().includes('real estate')) {
+            score += 30;
+          }
+          // Bonus for civil lawyers with property partition expertise
+          else if (lawyer.specialization === 'Civil' &&
+                   (lawyer.sub_specialty.toLowerCase().includes('partition') ||
+                    lawyer.sub_specialty.toLowerCase().includes('property'))) {
+            score += 25;
+          }
+          // Bonus for family lawyers with property division expertise
+          else if (lawyer.specialization === 'Family' &&
+                   lawyer.sub_specialty.toLowerCase().includes('property')) {
+            score += 20;
+          }
+          // Keyword matching in sub-specialty
+          else if (analysis.keywords.some(keyword =>
+              lawyer.sub_specialty.toLowerCase().includes(keyword.toLowerCase())
+          )) {
+            score += 15;
+          }
+        } else {
+          // Original logic for non-property cases
+          // Bonus for exact sub-specialty match
+          if (lawyer.sub_specialty.toLowerCase() === analysis.subSpecialty.toLowerCase()) {
+            score += 50;
+          }
+          // Partial match for sub-specialty containing keywords
+          else if (analysis.keywords.some(keyword =>
+              lawyer.sub_specialty.toLowerCase().includes(keyword.toLowerCase())
+          )) {
+            score += 25;
+          }
         }
         
-        // Bonus for high severity cases - prioritize experienced lawyers
-        if (analysis.severity === 'High' && lawyer.experience >= 10) {
+        // Enhanced experience bonus for property disputes
+        if (analysis.specialization === 'Property' && analysis.severity === 'High') {
+          if (lawyer.experience >= 15) {
+            score += 15; // Higher bonus for very experienced lawyers
+          } else if (lawyer.experience >= 10) {
+            score += 10;
+          } else if (lawyer.experience >= 5) {
+            score += 5;
+          }
+        }
+        // Standard experience bonus for other cases
+        else if (analysis.severity === 'High' && lawyer.experience >= 10) {
           score += 10;
+        }
+        
+        // Bonus for high urgency cases - prioritize lawyers with reasonable fees
+        if (analysis.urgency === 'Immediate' || analysis.urgency === 'High') {
+          if (lawyer.fee <= 1000) {
+            score += 5; // Small bonus for affordable lawyers in urgent cases
+          }
         }
         
         return {
           ...lawyer,
           matchScore: score,
           matchReason: score >= 100 ? 'Exact sub-specialty match' :
+                      score >= 85 ? 'Highly relevant sub-specialty' :
                       score >= 75 ? 'Related sub-specialty' :
+                      score >= 65 ? 'Partial specialization match' :
                       'Specialization match'
         };
       })
