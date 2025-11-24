@@ -13,7 +13,7 @@ const DB_FILE = path.join(__dirname, "db.json");
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI("AIzaSyD2fD3IeBNvGq5P6pJEmHoYAYmsH-fDKaY");
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 function readDB() {
   try {
@@ -217,18 +217,20 @@ async function validateCaseDescription(caseDescription) {
       'kill', 'murder', 'death', 'die', 'homicide', 'assault', 'rape', 'theft', 'robbery',
       'fraud', 'cheat', 'scam', 'divorce', 'custody', 'property', 'land', 'dispute', 'case',
       'court', 'lawyer', 'legal', 'sue', 'sued', 'complaint', 'police', 'fir', 'charge',
-      'arrest', 'bail', 'jail', 'prison', 'violence', 'harassment', 'domestic', 'abuse'
+      'arrest', 'bail', 'jail', 'prison', 'violence', 'harassment', 'domestic', 'abuse',
+      'cop', 'police', 'snatched', 'bike', 'vehicle', 'car', 'seized', 'seizure', 'confiscated',
+      'stole', 'stolen', 'stealing', 'theft', 'robbery', 'burglary'
     ];
     
     const containsLegalKeywords = seriousLegalKeywords.some(keyword => lowerText.includes(keyword));
     
-    // Check for obvious gibberish patterns
+    // Check for obvious gibberish patterns - more lenient
     const isGibberish = words.length < 2 ||
-                       /^[a-z]{10,}$/i.test(caseDescription.replace(/\s/g, '')) ||
+                       /^[a-z]{15,}$/i.test(caseDescription.replace(/\s/g, '')) ||
                        (/^[a-z\s]+$/i.test(caseDescription) && words.every(word => word.length < 2));
     
     // If it contains legal keywords, it's valid even if short
-    const isValid = containsLegalKeywords || !isGibberish;
+    const isValid = containsLegalKeywords || !isGibberish || words.length >= 3;
     
     let reason = "";
     let clarificationNeeded = "";
@@ -238,7 +240,7 @@ async function validateCaseDescription(caseDescription) {
       reason = "Input mentions serious legal matter requiring immediate attention";
       clarificationNeeded = "";
       confidence = 0.9;
-    } else if (isGibberish) {
+    } else if (isGibberish && words.length < 3) {
       reason = "Input appears to be gibberish or too short";
       clarificationNeeded = "Please describe your legal issue in detail (e.g., property dispute, divorce case, criminal matter, etc.)";
       confidence = 0.2;
@@ -282,7 +284,78 @@ app.post("/api/analyze-case", async (req, res) => {
         confidence: validation.confidence
       });
     }
-    const prompt = `
+    // First, get comprehensive legal guidance
+    const guidancePrompt = `
+    You are an expert Indian legal advisor providing detailed guidance for a legal case. Analyze the case description and provide comprehensive legal advice.
+
+    Case Description: "${caseDescription}"
+    City: "${city}"
+    
+    Provide detailed legal guidance in this exact JSON format:
+    {
+      "legalGuidance": {
+        "summary": "Brief summary of the legal issue",
+        "severity": "Critical|Serious|Moderate|Minor",
+        "urgency": "Immediate|High|Normal|Low",
+        "recommendedLawyerType": "Specific type of lawyer needed",
+        "relevantLaws": ["Law1", "Law2", "Law3"],
+        "immediateSteps": ["Step 1", "Step 2", "Step 3"],
+        "documentsNeeded": ["Document 1", "Document 2", "Document 3"],
+        "legalProcess": "Detailed explanation of the legal process",
+        "timeline": "Expected timeline for resolution",
+        "costEstimate": "Estimated legal costs",
+        "successProbability": "High|Medium|Low",
+        "risks": ["Risk 1", "Risk 2"],
+        "additionalAdvice": "Additional important advice"
+      },
+      "caseAnalysis": {
+        "specialization": "Family|Criminal|Property|Corporate|Cyber|Civil",
+        "subSpecialty": "Specific sub-specialty name",
+        "caseType": "Brief category name",
+        "keywords": ["keyword1", "keyword2", "keyword3"],
+        "description": "Brief description of the legal matter"
+      }
+    }
+    
+    IMPORTANT GUIDELINES:
+    - Focus on Indian law context
+    - Provide practical, actionable advice
+    - Include specific sections of relevant Indian laws (CrPC, IPC, etc.)
+    - Give realistic timelines and cost estimates
+    - Consider the city context for local procedures
+    - Be thorough but clear and organized
+    - Include both immediate steps and long-term strategy
+    - Mention potential risks and mitigation strategies
+    
+    Example for police seizure case:
+    - Mention CrPC sections 102, 451, 457
+    - Suggest filing application before Judicial Magistrate
+    - Include steps for obtaining seizure memo
+    - Mention option of writ petition in High Court
+    `;
+    
+    let guidanceResult;
+    try {
+      const guidanceResponse = await model.generateContent(guidancePrompt);
+      const guidanceText = guidanceResponse.response.text();
+      
+      console.log("Gemini guidance response:", guidanceText);
+      
+      let guidanceJsonMatch = guidanceText.match(/\{[\s\S]*\}/);
+      if (!guidanceJsonMatch) {
+        guidanceJsonMatch = guidanceText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+      }
+      
+      if (guidanceJsonMatch) {
+        guidanceResult = JSON.parse(guidanceJsonMatch[1] || guidanceJsonMatch[0]);
+        console.log("Parsed guidance result:", guidanceResult);
+      }
+    } catch (guidanceError) {
+      console.error("Guidance generation error:", guidanceError);
+    }
+
+    // Now get the lawyer matching analysis
+    const analysisPrompt = `
     You are a legal AI assistant specializing in Indian law. Analyze the case description and determine the exact lawyer specialization needed.
 
     Case Description: "${caseDescription}"
@@ -343,7 +416,7 @@ app.post("/api/analyze-case", async (req, res) => {
     Be thorough but decisive. Pick the most appropriate category based on the main issue.
     `;
 
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(analysisPrompt);
     const response = await result.response;
     const text = response.text();
 
@@ -487,6 +560,7 @@ app.post("/api/analyze-case", async (req, res) => {
     const generalMatches = scoredLawyers.filter(l => l.matchScore < 75);
 
     res.json({
+      legalGuidance,
       analysis: {
         ...analysis,
         caseType: analysis.specialization // Keep backward compatibility
@@ -543,14 +617,14 @@ app.post("/api/analyze-case", async (req, res) => {
         keywords: ["assault", "violence", "abuse", "harassment", "threat"],
         caseType: "Assault/Violence"
       };
-    } else if (hasAnyWord(["theft", "stealing", "robbery", "burglary", "stolen", "cheat", "scam"])) {
+    } else if (hasAnyWord(["theft", "stealing", "robbery", "burglary", "stolen", "cheat", "scam", "snatched", "seized", "confiscated"])) {
       analysis = {
         specialization: "Criminal",
         subSpecialty: "Theft & Robbery",
-        severity: "Medium",
-        urgency: "High",
-        description: "Criminal matter related to theft, robbery, or fraud",
-        keywords: ["theft", "robbery", "stealing", "burglary", "fraud"],
+        severity: "High",
+        urgency: "Immediate",
+        description: "Criminal matter involving theft, robbery, or illegal seizure of property - immediate legal assistance required",
+        keywords: ["theft", "robbery", "stealing", "snatched", "seized", "property"],
         caseType: "Theft/Robbery"
       };
     }
@@ -660,6 +734,20 @@ app.post("/api/analyze-case", async (req, res) => {
         description: "Matter involving business contracts or agreement breaches",
         keywords: ["contract", "agreement", "business", "breach"],
         caseType: "Contract Dispute"
+      };
+    }
+    // POLICE/GOVERNMENT ACTIONS - New category for police-related issues
+    else if (hasAnyWord(["cop", "police", "seized", "snatched", "confiscated", "arrested", "detained"]) ||
+             hasWordsInSequence("cop", "snatched") || hasWordsInSequence("police", "seized") ||
+             hasWordsInSequence("bike", "seized") || hasWordsInSequence("vehicle", "taken")) {
+      analysis = {
+        specialization: "Criminal",
+        subSpecialty: "Criminal Procedure & Constitutional Law",
+        severity: "High",
+        urgency: "Immediate",
+        description: "Legal matter involving police action, property seizure, or violation of rights - immediate legal assistance required",
+        keywords: ["police", "seized", "snatched", "constitutional", "crpc", "rights"],
+        caseType: "Police Action"
       };
     }
     // CYBER MATTERS
@@ -826,7 +914,25 @@ app.post("/api/analyze-case", async (req, res) => {
     const relatedMatches = scoredLawyers.filter(l => l.matchScore >= 75 && l.matchScore < 100);
     const generalMatches = scoredLawyers.filter(l => l.matchScore < 75);
 
+    // Create fallback legal guidance for error cases
+    const fallbackLegalGuidance = {
+      summary: analysis.description || "Legal matter requiring professional consultation",
+      severity: analysis.severity === "High" ? "Serious" : analysis.severity === "Medium" ? "Moderate" : "Minor",
+      urgency: analysis.urgency,
+      recommendedLawyerType: `${analysis.specialization} Lawyer specializing in ${analysis.subSpecialty}`,
+      relevantLaws: [],
+      immediateSteps: ["Consult a qualified lawyer immediately", "Gather all relevant documents", "Follow legal advice carefully"],
+      documentsNeeded: ["Identity proof", "Address proof", "Case-related documents"],
+      legalProcess: "Your lawyer will guide you through the specific legal process based on your case details.",
+      timeline: "Depends on case complexity and court procedures",
+      costEstimate: "Varies based on lawyer experience and case complexity",
+      successProbability: "Medium",
+      risks: ["Legal delays", "Documentation issues"],
+      additionalAdvice: "Follow your lawyer's guidance and maintain proper documentation"
+    };
+
     res.json({
+      legalGuidance: fallbackLegalGuidance,
       analysis: {
         ...analysis,
         caseType: analysis.specialization // Keep backward compatibility

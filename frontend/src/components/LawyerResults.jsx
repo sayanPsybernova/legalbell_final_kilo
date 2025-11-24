@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function LawyerResults({ lawyers, params, onSelect, onBackToChat }) {
+export default function LawyerResults({ lawyers, params, onSelect, onBackToChat, legalGuidance }) {
   const getMatchBadge = (lawyer) => {
     if (!lawyer.matchScore) return null;
     
@@ -68,17 +68,124 @@ export default function LawyerResults({ lawyers, params, onSelect, onBackToChat 
           <h2>Search Results</h2>
           <p>Location: <strong>{params.location}</strong> | Case Type: <strong>{params.type}</strong></p>
         </div>
-        <button 
-          className="btn" 
+        <button
+          className="btn"
           onClick={onBackToChat}
           style={{backgroundColor:'#6b7280', padding:'8px 16px'}}
         >
           ← Back to Chat
         </button>
       </div>
+      
+      {/* Legal Guidance Section - Prominently displayed */}
+      {legalGuidance && (
+        <div className="card" style={{background:'#fef3c7',borderLeft:'4px solid #f59e0b',marginBottom:16}}>
+          <div style={{fontWeight:700,color:'#d97706',fontSize:18,marginBottom:12}}>📋 Legal Guidance & What to Do</div>
+          
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))',gap:16,marginBottom:16}}>
+            <div>
+              <div style={{fontWeight:600,color:'#374151',marginBottom:4}}>📄 Case Summary</div>
+              <div style={{fontSize:14,lineHeight:1.5}}>{legalGuidance.summary}</div>
+            </div>
+            
+            <div>
+              <div style={{fontWeight:600,color:'#374151',marginBottom:4}}>⚡ Urgency & Severity</div>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                <span style={{
+                  background: legalGuidance.severity === 'Critical' ? '#dc2626' :
+                           legalGuidance.severity === 'Serious' ? '#ea580c' :
+                           legalGuidance.severity === 'Moderate' ? '#f59e0b' : '#10b981',
+                  color:'white',padding:'4px 8px',borderRadius:4,fontSize:12,fontWeight:600
+                }}>
+                  {legalGuidance.severity}
+                </span>
+                <span style={{
+                  background: legalGuidance.urgency === 'Immediate' ? '#dc2626' :
+                           legalGuidance.urgency === 'High' ? '#f59e0b' :
+                           legalGuidance.urgency === 'Normal' ? '#10b981' : '#6b7280',
+                  color:'white',padding:'4px 8px',borderRadius:4,fontSize:12,fontWeight:600
+                }}>
+                  {legalGuidance.urgency}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{marginBottom:16}}>
+            <div style={{fontWeight:600,color:'#374151',marginBottom:4}}>⚖️ Recommended Lawyer</div>
+            <div style={{fontSize:14,background:'#fff',padding:8,borderRadius:4,border:'1px solid #e5e7eb'}}>{legalGuidance.recommendedLawyerType}</div>
+          </div>
+
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))',gap:16,marginBottom:16}}>
+            <div>
+              <div style={{fontWeight:600,color:'#374151',marginBottom:4}}>🚀 Immediate Steps</div>
+              <ul style={{margin:0,paddingLeft:20,fontSize:14,lineHeight:1.5}}>
+                {legalGuidance.immediateSteps.map((step, i) => (
+                  <li key={i} style={{marginBottom:4}}>{step}</li>
+                ))}
+              </ul>
+            </div>
+            
+            <div>
+              <div style={{fontWeight:600,color:'#374151',marginBottom:4}}>📋 Documents Needed</div>
+              <ul style={{margin:0,paddingLeft:20,fontSize:14,lineHeight:1.5}}>
+                {legalGuidance.documentsNeeded.map((doc, i) => (
+                  <li key={i} style={{marginBottom:4}}>{doc}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div style={{marginBottom:16}}>
+            <div style={{fontWeight:600,color:'#374151',marginBottom:4}}>⚖️ Legal Process</div>
+            <div style={{fontSize:14,lineHeight:1.5,background:'#fff',padding:12,borderRadius:4,border:'1px solid #e5e7eb'}}>
+              {legalGuidance.legalProcess}
+            </div>
+          </div>
+
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:16,marginBottom:16}}>
+            <div>
+              <div style={{fontWeight:600,color:'#374151',marginBottom:4}}>⏱️ Timeline</div>
+              <div style={{fontSize:14}}>{legalGuidance.timeline}</div>
+            </div>
+            
+            <div>
+              <div style={{fontWeight:600,color:'#374151',marginBottom:4}}>💰 Cost Estimate</div>
+              <div style={{fontSize:14}}>{legalGuidance.costEstimate}</div>
+            </div>
+            
+            <div>
+              <div style={{fontWeight:600,color:'#374151',marginBottom:4}}>📈 Success Probability</div>
+              <div style={{fontSize:14}}>{legalGuidance.successProbability}</div>
+            </div>
+          </div>
+
+          {legalGuidance.risks && legalGuidance.risks.length > 0 && (
+            <div style={{marginBottom:16}}>
+              <div style={{fontWeight:600,color:'#dc2626',marginBottom:4}}>⚠️ Potential Risks</div>
+              <ul style={{margin:0,paddingLeft:20,fontSize:14,lineHeight:1.5}}>
+                {legalGuidance.risks.map((risk, i) => (
+                  <li key={i} style={{marginBottom:4}}>{risk}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {legalGuidance.additionalAdvice && (
+            <div>
+              <div style={{fontWeight:600,color:'#059669',marginBottom:4}}>💡 Additional Advice</div>
+              <div style={{fontSize:14,lineHeight:1.5,background:'#ecfdf5',padding:12,borderRadius:4,border:'1px solid #10b981'}}>
+                {legalGuidance.additionalAdvice}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Original AI Analysis (simplified) */}
       {params.analysis && (
         <div className="card" style={{background:'#f8fafc',borderLeft:'4px solid #2563eb',marginBottom:12}}>
-          <div style={{fontWeight:700,color:'#1e40af'}}>AI Case Analysis</div>
+          <div style={{fontWeight:700,color:'#1e40af'}}>Case Analysis</div>
           <div style={{fontSize:14,marginBottom:4}}>
             <strong>Specialization:</strong> {params.analysis.specialization || params.analysis.caseType}
             {params.analysis.subSpecialty && params.analysis.subSpecialty !== 'General Practice' &&

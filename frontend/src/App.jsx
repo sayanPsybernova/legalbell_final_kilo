@@ -84,6 +84,7 @@ export default function App() {
       {view === 'results' && <LawyerResults
         lawyers={lawyers}
         params={searchParams}
+        legalGuidance={searchParams.legalGuidance}
         onSelect={(l)=>{
           setSelectedLawyer(l);
           if (!user) {

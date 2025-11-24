@@ -291,9 +291,13 @@ export default function LandingChat({ onSearchComplete }) {
       }
       
       // If no clarification needed, proceed with analysis
+      const guidanceMessage = data.legalGuidance ?
+        `📋 **Legal Analysis & Guidance**\n\n**Summary:** ${data.legalGuidance.summary}\n**Severity:** ${data.legalGuidance.severity}\n**Urgency:** ${data.legalGuidance.urgency}\n\n**Recommended Lawyer:** ${data.legalGuidance.recommendedLawyerType}\n\n**Immediate Steps:**\n${data.legalGuidance.immediateSteps.map((step, i) => `${i + 1}. ${step}`).join('\n')}\n\n**Documents Needed:**\n${data.legalGuidance.documentsNeeded.map((doc, i) => `${i + 1}. ${doc}`).join('\n')}\n\n**Legal Process:** ${data.legalGuidance.legalProcess}\n\n**Timeline:** ${data.legalGuidance.timeline}\n\n**Cost Estimate:** ${data.legalGuidance.costEstimate}\n\n**Success Probability:** ${data.legalGuidance.successProbability}\n\n**Risks:**\n${data.legalGuidance.risks.map((risk, i) => `${i + 1}. ${risk}`).join('\n')}\n\n**Additional Advice:** ${data.legalGuidance.additionalAdvice}` :
+        data.analysis.description || data.analysis.caseType || "I've analyzed your case and found matching lawyers.";
+      
       setMessages(m => [...m, {
         role:'ai',
-        text: data.analysis.description || data.analysis.caseType || "I've analyzed your case and found matching lawyers."
+        text: guidanceMessage
       }]);
       
       setTimeout(() => {
@@ -312,6 +316,7 @@ export default function LandingChat({ onSearchComplete }) {
           type: data.analysis.caseType || data.analysis.specialization || 'General',
           lawyers: data.matchingLawyers || [],
           analysis: data.analysis,
+          legalGuidance: data.legalGuidance,
           exactMatches: data.exactMatches,
           relatedMatches: data.relatedMatches,
           generalMatches: data.generalMatches
