@@ -265,6 +265,32 @@ export default function LandingChat({ onSearchComplete }) {
       const data = await response.json();
       console.log("API response data:", data);
       
+      // Handle clarification requests
+      if (data.needsClarification) {
+        setMessages(m => [...m, {
+          role:'ai',
+          text: data.message
+        }]);
+        
+        if (data.clarificationQuestion) {
+          setTimeout(() => {
+            setMessages(m => [...m, {
+              role:'ai',
+              text: data.clarificationQuestion
+            }]);
+          }, 1000);
+        }
+        
+        // Update conversation state to wait for clarification
+        setConversationState(prev => ({
+          ...prev,
+          awaitingClarification: 'case',
+          caseDescription: null // Reset case description to get better input
+        }));
+        return;
+      }
+      
+      // If no clarification needed, proceed with analysis
       setMessages(m => [...m, {
         role:'ai',
         text: data.analysis.description || data.analysis.caseType || "I've analyzed your case and found matching lawyers."

@@ -139,13 +139,121 @@ app.get("/api/lawyers/:id", (req, res) => {
   res.json(l);
 });
 
+// Validate case description using Gemini AI
+async function validateCaseDescription(caseDescription) {
+  try {
+    const prompt = `
+    You are a legal AI assistant specializing in criminal law recognition. Analyze the following case description and determine if it contains meaningful information about a legal issue.
+
+    Case Description: "${caseDescription}"
+    
+    Please respond with a JSON object in this exact format:
+    {
+      "isValid": true/false,
+      "reason": "Brief explanation of why it's valid or invalid",
+      "clarificationNeeded": "Specific question to ask user if clarification is needed (empty string if no clarification needed)",
+      "confidence": 0.0-1.0
+    }
+    
+    CRITICAL GUIDELINES:
+    - ALWAYS consider it VALID if it mentions ANY criminal matter: kill, murder, death, assault, rape, theft, robbery, fraud, violence, abuse, etc.
+    - ALWAYS consider it VALID if it mentions family disputes: divorce, custody, property, land, inheritance, etc.
+    - Consider it INVALID only if: it's complete gibberish (like "asdfghjkl"), random characters, or single words with no legal context
+    - Even short phrases like "i kill someone" or "divorce case" are VALID and should be treated seriously
+    - Be extremely lenient with spelling mistakes and grammar - focus on the legal intent
+    - ANY mention of harm, death, violence, or criminal activity is automatically VALID
+    - When in doubt, mark as VALID - it's better to analyze a potential case than reject a real legal emergency
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    // Extract JSON from the response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("Invalid response format from Gemini");
+    }
+
+    return JSON.parse(jsonMatch[0]);
+  } catch (error) {
+    console.error("Validation error:", error);
+    // Enhanced fallback validation with legal issue detection
+    const words = caseDescription.trim().split(/\s+/);
+    const lowerText = caseDescription.toLowerCase();
+    
+    // Check for serious legal matters that should always be considered valid
+    const seriousLegalKeywords = [
+      'kill', 'murder', 'death', 'die', 'homicide', 'assault', 'rape', 'theft', 'robbery',
+      'fraud', 'cheat', 'scam', 'divorce', 'custody', 'property', 'land', 'dispute', 'case',
+      'court', 'lawyer', 'legal', 'sue', 'sued', 'complaint', 'police', 'fir', 'charge',
+      'arrest', 'bail', 'jail', 'prison', 'violence', 'harassment', 'domestic', 'abuse'
+    ];
+    
+    const containsLegalKeywords = seriousLegalKeywords.some(keyword => lowerText.includes(keyword));
+    
+    // Check for obvious gibberish patterns
+    const isGibberish = words.length < 2 ||
+                       /^[a-z]{10,}$/i.test(caseDescription.replace(/\s/g, '')) ||
+                       (/^[a-z\s]+$/i.test(caseDescription) && words.every(word => word.length < 2));
+    
+    // If it contains legal keywords, it's valid even if short
+    const isValid = containsLegalKeywords || !isGibberish;
+    
+    let reason = "";
+    let clarificationNeeded = "";
+    let confidence = 0.5;
+    
+    if (containsLegalKeywords) {
+      reason = "Input mentions serious legal matter requiring immediate attention";
+      clarificationNeeded = "";
+      confidence = 0.9;
+    } else if (isGibberish) {
+      reason = "Input appears to be gibberish or too short";
+      clarificationNeeded = "Please describe your legal issue in detail (e.g., property dispute, divorce case, criminal matter, etc.)";
+      confidence = 0.2;
+    } else {
+      reason = "Input seems to contain meaningful information";
+      clarificationNeeded = "";
+      confidence = 0.8;
+    }
+    
+    return {
+      isValid,
+      reason,
+      clarificationNeeded,
+      confidence
+    };
+  }
+}
+
 // Analyze case using real Gemini AI
 app.post("/api/analyze-case", async (req, res) => {
   const { caseDescription, city } = req.body;
 
   try {
+    // First validate the case description
+    const validation = await validateCaseDescription(caseDescription);
+    
+    if (!validation.isValid) {
+      return res.json({
+        needsClarification: true,
+        message: validation.reason,
+        clarificationQuestion: validation.clarificationNeeded,
+        confidence: validation.confidence
+      });
+    }
+
+    if (validation.clarificationNeeded) {
+      return res.json({
+        needsClarification: true,
+        message: "I need more details to understand your case properly.",
+        clarificationQuestion: validation.clarificationNeeded,
+        confidence: validation.confidence
+      });
+    }
     const prompt = `
-    You are a legal AI assistant specializing in Indian law. Analyze the following case description and determine the exact lawyer specialization and sub-specialty needed.
+    You are a legal AI assistant specializing in Indian criminal law and emergency legal matters. Analyze the following case description and determine the exact lawyer specialization and sub-specialty needed.
 
     Case Description: "${caseDescription}"
     
@@ -159,6 +267,12 @@ app.post("/api/analyze-case", async (req, res) => {
       "keywords": ["keyword1", "keyword2", "keyword3"],
       "caseType": "Brief category name"
     }
+    
+    CRIMINAL LAW PRIORITY - Pay special attention to these patterns:
+    - ANY mention of "kill", "killed", "kill", "murder", "death", "die" = "Murder & Homicide" with HIGH severity and IMMEDIATE urgency
+    - ANY mention of "father", "mother", "parent", "family member" + harm = "Murder & Homicide" with HIGH severity and IMMEDIATE urgency
+    - ANY admission of criminal activity = CRIMINAL law with HIGH severity and IMMEDIATE urgency
+    - Even vague criminal mentions should be treated as HIGH priority
     
     Rules for Indian legal cases and sub-specialties:
     
@@ -366,14 +480,16 @@ app.post("/api/analyze-case", async (req, res) => {
     };
 
     // Enhanced keyword matching with sub-specialties
-    if (text.includes("kill") || text.includes("murder") || text.includes("homicide")) {
+    if (text.includes("kill") || text.includes("killed") || text.includes("killing") ||
+        text.includes("murder") || text.includes("homicide") || text.includes("death") ||
+        (text.includes("father") && (text.includes("kill") || text.includes("harm") || text.includes("hurt")))) {
       analysis = {
         specialization: "Criminal",
         subSpecialty: "Murder & Homicide",
         severity: "High",
         urgency: "Immediate",
-        description: "Serious criminal matter involving homicide charges",
-        keywords: ["murder", "homicide", "killing", "criminal"],
+        description: "Extremely serious criminal matter involving homicide charges - immediate legal assistance required",
+        keywords: ["murder", "homicide", "killing", "criminal", "death", "father"],
         caseType: "Homicide"
       };
     } else if (text.includes("divorce") || text.includes("separation") || text.includes("wife") || text.includes("husband")) {
