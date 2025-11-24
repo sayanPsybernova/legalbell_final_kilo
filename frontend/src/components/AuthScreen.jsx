@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 
-export default function AuthScreen({ onLogin, onRegister, onBackToResults, isClientConnection = false }) {
+export default function AuthScreen({ onLogin, onRegister, onBackToResults, isClientConnection = false, isFromBooking = false }) {
   const [role, setRole] = useState('client')
-  const [isRegister, setIsRegister] = useState(isClientConnection && role === 'client')
+  const [isRegister, setIsRegister] = useState((isClientConnection && role === 'client') || isFromBooking)
   const [formData, setFormData] = useState({ name:'', email:'', city:'', specialization:'Criminal', fee:'', experience:'', about:'' })
 
   const submit = (e) => {
@@ -29,7 +29,7 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
       )}
       <h2 style={{textAlign:'center'}}>{isRegister ? `Register as ${role}` : 'Welcome Back'}</h2>
       <div style={{display:'flex',gap:8,marginBottom:12}}>
-        <button className="btn" onClick={()=>{setRole('client'); if(isClientConnection) setIsRegister(true);}} style={{flex:1,background: role==='client'?'#0f172a':'#fff', color: role==='client'?'#fff':'#0f172a'}}>Client</button>
+        <button className="btn" onClick={()=>{setRole('client'); if(isClientConnection || isFromBooking) setIsRegister(true);}} style={{flex:1,background: role==='client'?'#0f172a':'#fff', color: role==='client'?'#fff':'#0f172a'}}>Client</button>
         <button className="btn" onClick={()=>setRole('lawyer')} style={{flex:1,background: role==='lawyer'?'#0f172a':'#fff', color: role==='lawyer'?'#fff':'#0f172a'}}>Lawyer</button>
       </div>
       <form onSubmit={submit} className="grid">
@@ -57,6 +57,11 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
           {isRegister ? 'Already registered? Click to Login' : "New client? Click to Sign Up"}
         </button>
       </div>
+      {isFromBooking && isRegister && (
+        <div style={{textAlign:'center',marginTop:8, fontSize:12, color:'#6b7280'}}>
+          Create an account to book your consultation with our lawyer
+        </div>
+      )}
     </div>
   )
 }

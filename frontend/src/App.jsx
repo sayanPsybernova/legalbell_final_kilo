@@ -97,11 +97,16 @@ export default function App() {
         }}
         onBackToChat={()=> setView('landing')}
       />}
-      {view === 'auth' && <AuthScreen onLogin={handleLogin} onRegister={handleRegister} onBackToResults={previousSearch ? () => {
-        setSearchParams(previousSearch.params);
-        setLawyers(previousSearch.lawyers);
-        setView('results');
-      } : null} />}
+      {view === 'auth' && <AuthScreen
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        onBackToResults={previousSearch ? () => {
+          setSearchParams(previousSearch.params);
+          setLawyers(previousSearch.lawyers);
+          setView('results');
+        } : null}
+        isFromBooking={!!selectedLawyer}
+      />}
       {view === 'booking' && selectedLawyer && <BookingFlow lawyer={selectedLawyer} user={user} existingBookings={bookings} onConfirm={async (b)=>{ await axios.post('/api/bookings', b); fetchBookings(); setView('booking-confirmed'); }} />}
       {view === 'booking-confirmed' && <div className="card" style={{textAlign:'center',padding:40}}>
         <h2>Booking Confirmed!</h2>
