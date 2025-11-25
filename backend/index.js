@@ -280,6 +280,39 @@ async function validateCaseDescription(caseDescription) {
   }
 }
 
+// Helper functions for fuzzy matching
+function levenshteinDistance(str1, str2) {
+  const matrix = [];
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  return matrix[str2.length][str1.length];
+}
+
+function calculateSimilarity(str1, str2) {
+  const longer = str1.length > str2.length ? str1 : str2;
+  const shorter = str1.length > str2.length ? str2 : str1;
+  if (longer.length === 0) return 1.0;
+  const editDistance = levenshteinDistance(longer, shorter);
+  return (longer.length - editDistance) / longer.length;
+}
+
 // Analyze case using real Gemini AI
 app.post("/api/analyze-case", async (req, res) => {
   const { caseDescription, city } = req.body;
@@ -475,11 +508,25 @@ app.post("/api/analyze-case", async (req, res) => {
 
     const scoredLawyers = db.lawyers
       .filter((lawyer) => {
-        const cityMatch = lawyer.location
-          .toLowerCase()
-          .includes(city.toLowerCase());
+        const lawyerCity = lawyer.location.toLowerCase();
+        const searchCity = city.toLowerCase();
+        
+        // Fuzzy match for city (handle typos like 'derahrun' -> 'dehradun')
+        const citySimilarity = calculateSimilarity(lawyerCity, searchCity);
+        const isCityMatch = lawyerCity.includes(searchCity) || 
+                           searchCity.includes(lawyerCity) || 
+                           citySimilarity > 0.4; // Allow 40%+ similarity (e.g. "derahrun" vs "dehradun" is ~0.5)
+
         const specializationMatch = lawyer.specialization === analysis.specialization;
-        return cityMatch && specializationMatch;
+        
+        // Debug logging for Dehradun/Derahrun case
+        if (searchCity.includes('dehra') || searchCity.includes('derah')) {
+             if (lawyerCity.includes('dehra')) {
+                 console.log(`Checking ${lawyer.name} (${lawyer.location}): Sim=${citySimilarity.toFixed(2)}, CityMatch=${isCityMatch}, SpecMatch=${specializationMatch} (Req: ${analysis.specialization}, Has: ${lawyer.specialization})`);
+             }
+        }
+
+        return isCityMatch && specializationMatch;
       })
       .map((lawyer) => {
         let score = 50; // Base score for matching specialization and city
@@ -597,15 +644,35 @@ app.post("/api/analyze-case", async (req, res) => {
     // This ensures consistent classification even if the AI fails or is blocked
     const fallbackAnalysis = findBestSpecialization(caseDescription, city);
     
+    // Normalize specialization to match DB categories
+    const CATEGORY_MAPPING = {
+      "Criminal Law": "Criminal",
+      "Family Law": "Family",
+      "Property & Real Estate Law": "Property",
+      "Corporate / Commercial Law": "Corporate",
+      "Taxation Law": "Corporate",
+      "Labour & Employment Law": "Civil",
+      "Consumer Protection Law": "Civil",
+      "Cyber Law": "Cyber",
+      "Intellectual Property (IPR) Law": "Corporate",
+      "Immigration & Passport Law": "Civil",
+      "Banking & Finance Law": "Corporate",
+      "Environmental Law": "Civil",
+      "Medical / Healthcare Law": "Civil",
+      "Education Law": "Civil"
+    };
+
+    const dbSpecialization = CATEGORY_MAPPING[fallbackAnalysis.specialization] || "Civil"; // Default to Civil if mapping fails
+
     const analysis = {
-      specialization: fallbackAnalysis.specialization,
+      specialization: dbSpecialization,
       subSpecialty: fallbackAnalysis.subSpecialty,
       severity: fallbackAnalysis.severity,
       urgency: fallbackAnalysis.urgency,
       description: fallbackAnalysis.description,
       keywords: fallbackAnalysis.keywords,
       caseType: fallbackAnalysis.subSpecialty,
-      reasoning: `Automated Keyword Analysis: Matched keywords [${fallbackAnalysis.keywords.join(', ')}] to category '${fallbackAnalysis.specialization}'`
+      reasoning: `Automated Keyword Analysis: Matched keywords [${fallbackAnalysis.keywords.join(', ')}] to category '${dbSpecialization}'`
     };
 
     const db = readDB();

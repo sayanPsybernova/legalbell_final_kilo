@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 
-const INDIAN_CITIES = ["mumbai","delhi","bangalore","bengaluru","hyderabad","chennai","kolkata","pune","ahmedabad","jaipur"]
+// Removed hardcoded list to allow dynamic city entry
+// const INDIAN_CITIES = ["mumbai","delhi", ...] 
 
 export default function LandingChat({ onSearchComplete }) {
   const [messages, setMessages] = useState([{ role:'ai', text: "Hello! I'm here to help you find the right lawyer. Would you prefer online or offline consultation?" }])
@@ -31,185 +32,85 @@ export default function LandingChat({ onSearchComplete }) {
     let response = ""
     let newState = { ...state }
     
-    // Check for complete information in one sentence (first priority)
-    if (!state.consultationType || !state.city) {
-      const onlineKw = ['online','virtual','remote','video','call']
-      const offlineKw = ['offline','in-person','person','office','physical','face to face','face-to-face','ofline']
-      const isOnline = onlineKw.some(k => lowerText.includes(k))
-      const isOffline = offlineKw.some(k => lowerText.includes(k))
-      
-      // Check if user provided all info in one sentence
-      if ((isOnline || isOffline) && !state.consultationType) {
-        newState.consultationType = isOnline ? 'online' : 'offline'
-        
-        // Look for city in the same sentence
-        const foundCity = INDIAN_CITIES.find(c => lowerText.includes(c))
-        if (foundCity && !state.city) {
-          newState.city = foundCity.charAt(0).toUpperCase() + foundCity.slice(1)
-          response = `Perfect! ${isOnline ? 'Online' : 'Offline'} consultation it is in ${newState.city}. Now, please briefly describe your legal issue (for example: divorce case, property dispute, criminal matter, etc.).`
-          
-          // Check if case description is also in the same sentence
-          const words = originalText.split(' ')
-          const caseDescWords = words.filter(word => 
-            word.length > 3 && 
-            !onlineKw.some(k => word.toLowerCase().includes(k)) && 
-            !offlineKw.some(k => word.toLowerCase().includes(k)) &&
-            !INDIAN_CITIES.some(c => word.toLowerCase().includes(c)) &&
-            !word.toLowerCase().includes('need') &&
-            !word.toLowerCase().includes('from') &&
-            !word.toLowerCase().includes('lawer') &&
-            !word.toLowerCase().includes('lawyer') &&
-            !word.toLowerCase().includes('lwyer')
-          )
-          
-          if (caseDescWords.length > 0) {
-            newState.caseDescription = caseDescWords.join(' ')
-            response = `Perfect! I have all your information: ${isOnline ? 'online' : 'offline'} consultation in ${newState.city} for ${caseDescWords.join(' ')}. Analyzing your case...`
-            setTimeout(() => analyzeCase(newState), 1500)
-          }
-        } else {
-          response = `Perfect! ${isOnline ? 'Online' : 'Offline'} consultation it is. Which city are you in?`
-        }
-      }
-    }
-    
-    // Check for change requests - more comprehensive detection
-    const changeIndicators = ['change', 'different', 'wrong', 'instead', 'rather', 'nono', 'no no', 'actually', 'acrtually', 'wait', 'prefer', 'pereferd', 'can you', 'i want', 'switch', 'mode', 'for']
-    const isChangeRequest = changeIndicators.some(indicator => lowerText.includes(indicator))
-    
-    // Check for consultation type change first (highest priority)
     const onlineKw = ['online','virtual','remote','video','call']
-    const offlineKw = ['offline','in-person','person','office','physical','face to face','face-to-face','ofline'] // Added 'ofline' for typo
+    const offlineKw = ['offline','in-person','person','office','physical','face to face','face-to-face','ofline']
     const isOnline = onlineKw.some(k => lowerText.includes(k))
     const isOffline = offlineKw.some(k => lowerText.includes(k))
-    
-    // Check for combined change requests (both mode and city in one message)
-    if (isChangeRequest) {
-      let hasModeChange = false
-      let hasCityChange = false
-      let newMode = null
-      let newCity = null
-      
-      // Check for mode change
-      if (isOnline || isOffline) {
-        hasModeChange = true
-        newMode = isOnline ? 'online' : 'offline'
-        newState.consultationType = newMode
-      }
-      
-      // Check for city change - improved pattern matching
-      const foundCity = INDIAN_CITIES.find(c => lowerText.includes(c))
-      const cityIndicators = ['city', 'location', 'lawer', 'lawyer', 'from']
-      const hasCityIndicator = cityIndicators.some(indicator => lowerText.includes(indicator))
-      
-      if (foundCity || hasCityIndicator) {
-        hasCityChange = true
-        if (foundCity) {
-          newCity = foundCity.charAt(0).toUpperCase() + foundCity.slice(1)
-          newState.city = newCity
-        }
-      }
-      
-      // Build response based on what changed
-      if (hasModeChange && hasCityChange && newCity) {
-        response = `Sure! I'll change your preferred mode to ${newMode} consultation and update your city to ${newCity}.`
-      } else if (hasModeChange && hasCityChange) {
-        response = `Sure! I'll change your preferred mode to ${newMode} consultation. Which city would you prefer instead?`
-        newState.awaitingClarification = 'city'
-      } else if (hasModeChange) {
-        response = `Sure! I'll change your preferred mode to ${newMode} consultation.`
-      } else if (hasCityChange && newCity) {
-        response = `Sure! I've updated your city to ${newCity}.`
-      } else if (hasCityChange) {
-        response = "Sure! Which city would you prefer instead?"
-        newState.awaitingClarification = 'city'
-      }
-      
-      // Add follow-up based on what's still needed
-      if (!newState.city && !hasCityChange) {
-        response += " Which city are you in?"
-      } else if (!newState.caseDescription && (!hasCityChange || newCity)) {
-        response += " Now, please describe your legal issue."
-      } else if (!newState.caseDescription && hasCityChange && !newCity) {
-        response += " After you choose a city, please describe your legal issue."
-      } else if (newState.consultationType && newState.city && !newState.caseDescription) {
-        response += " Please describe your legal issue."
-      } else if (newState.consultationType && newState.city && newState.caseDescription) {
-        response += " I have all your information. Would you like me to find lawyers for you now?"
-      }
+
+    // Helper to detect if a word is likely a city (starts with capital in original text, not a keyword)
+    const extractCity = (text, origText) => {
+       // Simple heuristic: if the user provides a city name, it's likely a noun.
+       // If we are in the "asking for city" state, almost any input that isn't a command is a city.
+       if (state.consultationType && !state.city) {
+          // Exclude common keywords
+          const cleanText = origText.replace(/[.,!?;:]/g, '').trim();
+          if (cleanText.length > 2 && !onlineKw.includes(cleanText.toLowerCase()) && !offlineKw.includes(cleanText.toLowerCase())) {
+             return cleanText.charAt(0).toUpperCase() + cleanText.slice(1);
+          }
+       }
+       // Check for common cities in the text even if not in specific state (for "online in Mumbai")
+       // Since we don't have a list, we rely on the flow.
+       return null;
     }
-    
-    // Check for consultation type
-    if (!newState.consultationType && !response) {
-      const onlineKw = ['online','virtual','remote','video','call']
-      const offlineKw = ['offline','in-person','person','office','physical','face to face','face-to-face']
-      const isOnline = onlineKw.some(k => lowerText.includes(k))
-      const isOffline = offlineKw.some(k => lowerText.includes(k))
-      
+
+    // Check for consultation type change/setting
+    if (!newState.consultationType) {
       if (isOnline || isOffline) {
         newState.consultationType = isOnline ? 'online' : 'offline'
+        
+        // Check if city is also provided in the same message (heuristic: any capitalized word or remaining text)
+        // For simplicity in this "any city" version, we'll ask for city next unless explicitly clear.
         response = `Perfect! ${isOnline ? 'Online' : 'Offline'} consultation it is. Which city are you in?`
       }
+    } else if (!newState.city) {
+        // If we are expecting a city
+        const potentialCity = originalText.replace(/[.,!?;:]/g, '').trim();
+        if (potentialCity.length > 2) {
+            newState.city = potentialCity.charAt(0).toUpperCase() + potentialCity.slice(1);
+            response = `Great! ${newState.city} it is. Now, please briefly describe your legal issue (for example: divorce case, property dispute, criminal matter, etc.).`
+        } else {
+             response = "Could you please provide the name of your city?"
+        }
+    } else if (!newState.caseDescription) {
+        // Expecting case description
+         if (originalText.length >= 3) {
+            newState.caseDescription = originalText
+            response = "Thank you for the details. I'm analyzing your case to find the best matching lawyers..."
+            setTimeout(() => analyzeCase(newState), 1500)
+          } else {
+            response = "Could you provide a bit more detail about your legal issue? For example: 'divorce case', 'property dispute', 'criminal matter', etc."
+          }
+    } else {
+        // Already have everything, maybe user is chatting or changing something
+        // Check for change requests
+        const changeIndicators = ['change', 'different', 'wrong', 'instead', 'rather', 'nono', 'no no', 'actually', 'switch']
+        if (changeIndicators.some(indicator => lowerText.includes(indicator))) {
+             response = "I understand you want to make a change. Let's start over. Would you prefer online or offline consultation?";
+             newState = {
+                consultationType: null,
+                city: null,
+                caseDescription: null,
+                awaitingClarification: false
+             };
+        } else {
+            response = "I have all your information. If you need to start over, just say 'change'."
+        }
     }
-    
-    // Check for city
-    if (newState.consultationType && !newState.city && !response) {
-      const found = INDIAN_CITIES.find(c => lowerText.includes(c))
-      if (found) {
-        newState.city = found.charAt(0).toUpperCase() + found.slice(1)
-        response = `Great! ${newState.city} it is. Now, please briefly describe your legal issue (for example: divorce case, property dispute, criminal matter, etc.).`
-      } else if (!state.awaitingClarification) {
-        response = `I don't have lawyers in that city yet. I can help you in: ${INDIAN_CITIES.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')}. Which one would you prefer?`
-      }
-    }
-    
-    // Handle clarification responses
-    if (state.awaitingClarification === 'city' && !response) {
-      const found = INDIAN_CITIES.find(c => lowerText.includes(c))
-      if (found) {
-        newState.city = found.charAt(0).toUpperCase() + found.slice(1)
-        newState.awaitingClarification = false
-        response = `Perfect! I've updated your city to ${newState.city}. Now, please describe your legal issue.`
-      }
-    }
-    
-    // Check for case description
-    if (newState.consultationType && newState.city && !newState.caseDescription && !response) {
-      if (originalText.length >= 3) {
-        newState.caseDescription = originalText
-        response = "Thank you for the details. I'm analyzing your case to find the best matching lawyers..."
+
+    // Handle the "all in one" case (e.g. "Online in Mumbai") - Simplified logic
+    // If we just set consultation type but haven't returned, check if there's more text that could be a city
+    if (newState.consultationType && !state.consultationType && !newState.city) {
+        const cleanText = originalText.toLowerCase();
+        // Remove online/offline keywords
+        let remaining = cleanText;
+        [...onlineKw, ...offlineKw].forEach(k => remaining = remaining.replace(k, ''));
+        remaining = remaining.replace('consultation', '').replace(' in ', '').trim();
         
-        // Proceed with analysis
-        setTimeout(() => analyzeCase(newState), 1500)
-      } else {
-        response = "Could you provide a bit more detail about your legal issue? For example: 'divorce case', 'property dispute', 'criminal matter', etc."
-      }
-    }
-    
-    // Handle clarification for case description
-    if (state.awaitingClarification === 'case' && !response) {
-      if (originalText.length >= 3) {
-        newState.caseDescription = originalText
-        newState.awaitingClarification = false
-        response = "Thank you for the clarification. I'm analyzing your case to find the best matching lawyers..."
-        
-        setTimeout(() => analyzeCase(newState), 1500)
-      } else {
-        response = "I need a bit more information. Could you describe what kind of legal help you need?"
-      }
-    }
-    
-    // Default response if nothing matched
-    if (!response) {
-      if (!newState.consultationType) {
-        response = "I'd be happy to help! Would you prefer online or offline consultation?"
-      } else if (!newState.city) {
-        response = "Which city are you in? I can help you in: " + INDIAN_CITIES.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')
-      } else if (!newState.caseDescription) {
-        response = "Please describe your legal issue so I can find the right lawyer for you."
-      } else {
-        response = "I have all your information. Would you like me to find lawyers for you now, or is there anything you'd like to change?"
-      }
+        if (remaining.length > 3) {
+            // Assume the rest is the city
+            newState.city = remaining.charAt(0).toUpperCase() + remaining.slice(1);
+            response = `Perfect! ${newState.consultationType === 'online' ? 'Online' : 'Offline'} consultation in ${newState.city}. Now, please briefly describe your legal issue.`
+        }
     }
     
     setConversationState(newState)
