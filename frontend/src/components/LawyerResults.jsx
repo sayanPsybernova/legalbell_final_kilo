@@ -76,6 +76,18 @@ export default function LawyerResults({ lawyers, params, onSelect, onBackToChat,
           ← Back to Chat
         </button>
       </div>
+
+      {/* User Case Description Display */}
+      {params.caseDescription && (
+        <div className="card" style={{background:'#f3f4f6', borderLeft:'4px solid #4b5563', marginBottom:16}}>
+          <div style={{fontWeight:700, color:'#374151', marginBottom:8, display:'flex', alignItems:'center'}}>
+            <span style={{marginRight:8}}>📝</span> Your Case Description
+          </div>
+          <div style={{fontSize:15, fontStyle:'italic', color:'#4b5563', lineHeight:1.5}}>
+            "{params.caseDescription}"
+          </div>
+        </div>
+      )}
       
       {/* Legal Guidance Section - Prominently displayed */}
       {legalGuidance && (
@@ -186,6 +198,14 @@ export default function LawyerResults({ lawyers, params, onSelect, onBackToChat,
       {params.analysis && (
         <div className="card" style={{background:'#f8fafc',borderLeft:'4px solid #2563eb',marginBottom:12}}>
           <div style={{fontWeight:700,color:'#1e40af'}}>Case Analysis</div>
+          
+          {/* New AI Reasoning Display */}
+          {params.analysis.reasoning && (
+            <div style={{marginTop:8, marginBottom:12, padding:8, background:'#e0e7ff', borderRadius:4, fontSize:13, color:'#3730a3', fontStyle:'italic'}}>
+              <strong>🤖 AI Reasoning:</strong> {params.analysis.reasoning}
+            </div>
+          )}
+
           <div style={{fontSize:14,marginBottom:4}}>
             <strong>Specialization:</strong> {params.analysis.specialization || params.analysis.caseType}
             {params.analysis.subSpecialty && params.analysis.subSpecialty !== 'General Practice' &&

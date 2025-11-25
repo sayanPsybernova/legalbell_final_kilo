@@ -319,7 +319,8 @@ export default function LandingChat({ onSearchComplete }) {
           legalGuidance: data.legalGuidance,
           exactMatches: data.exactMatches,
           relatedMatches: data.relatedMatches,
-          generalMatches: data.generalMatches
+          generalMatches: data.generalMatches,
+          caseDescription: state.caseDescription
         });
       }, 2000);
     } catch (error) {

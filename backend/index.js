@@ -3,7 +3,8 @@ const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 const bodyParser = require("body-parser");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
+const { LEGAL_SPECIALIZATIONS, findBestSpecialization } = require("./specializations");
 
 const app = express();
 app.use(cors());
@@ -11,9 +12,29 @@ app.use(bodyParser.json());
 
 const DB_FILE = path.join(__dirname, "db.json");
 
-// Initialize Gemini AI
+// Initialize Gemini AI with Safety Settings to allow legal analysis of sensitive topics
 const genAI = new GoogleGenerativeAI("AIzaSyD2fD3IeBNvGq5P6pJEmHoYAYmsH-fDKaY");
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = genAI.getGenerativeModel({ 
+  model: "gemini-1.5-flash",
+  safetySettings: [
+    {
+      category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+      threshold: HarmBlockThreshold.BLOCK_NONE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+      threshold: HarmBlockThreshold.BLOCK_NONE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+      threshold: HarmBlockThreshold.BLOCK_NONE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+      threshold: HarmBlockThreshold.BLOCK_NONE,
+    },
+  ],
+});
 
 function readDB() {
   try {
@@ -354,66 +375,63 @@ app.post("/api/analyze-case", async (req, res) => {
       console.error("Guidance generation error:", guidanceError);
     }
 
+    // Build a dynamic knowledge base string from the imported specializations
+    const knowledgeBase = Object.entries(LEGAL_SPECIALIZATIONS)
+      .map(([category, data]) => {
+        const subs = Object.keys(data.subSpecialties).join(", ");
+        return `- ${category}: ${data.description} (Includes: ${subs})`;
+      })
+      .join("\n");
+
     // Now get the lawyer matching analysis
     const analysisPrompt = `
-    You are a legal AI assistant specializing in Indian law. Analyze the case description and determine the exact lawyer specialization needed.
+    You are a highly intelligent legal AI assistant for the Indian judicial system. Your goal is to analyze a case description and classify it into the correct legal domain for lawyer matching.
 
-    Case Description: "${caseDescription}"
+    CASE DESCRIPTION: "${caseDescription}"
+
+    ---
     
-    IMPORTANT: Respond ONLY with this JSON format:
+    LEGAL KNOWLEDGE BASE (Use this to understand specific legal issues):
+    ${knowledgeBase}
+
+    ---
+
+    Your task is to map the case to one of the following 6 STRICT Database Categories:
+    1. **Criminal**: Theft, Murder, Assault, Violence, Drugs (NDPS), Cheating (420), Forgery, Police Harassment, Bail, Cyber Crime (if serious).
+    2. **Family**: Divorce, Child Custody, Maintenance, Domestic Violence (Protection), Restitution of Conjugal Rights, Adoption.
+    3. **Property**: Land Disputes, Illegal Possession, Ancestral Property, Real Estate, Builder Disputes (RERA), Tenant/Landlord Eviction.
+    4. **Corporate**: Business Contracts, Company Formation, Startups, M&A, Insolvency, Intellectual Property (IPR), Taxation (Income Tax/GST), Banking & Finance.
+    5. **Cyber**: Online Fraud, Hacking, Data Privacy, Social Media Abuse.
+    6. **Civil**: Everything else - Breach of Contract, Money Recovery, Employment/Labor, Consumer Disputes, Medical Negligence, Education, Insurance Claims, Motor Accidents, Defamation.
+
+    IMPORTANT MAPPING RULES:
+    - **Theft/Stealing** is ALWAYS **Criminal**.
+    - **Taxation/GST** -> Map to **Corporate**.
+    - **Intellectual Property (IPR)** -> Map to **Corporate**.
+    - **Banking/Loans** -> Map to **Corporate** (unless pure fraud -> Criminal).
+    - **Employment/Labor** -> Map to **Civil**.
+    - **Medical Negligence** -> Map to **Civil**.
+    - **Consumer Disputes** -> Map to **Civil**.
+    - **Cyber Crime** -> Prefer **Cyber** if it involves online/digital tech, otherwise **Criminal**.
+
+    SPECIFIC INDIAN CONTEXT:
+    - "Stole current" or "Current theft" refers to **Electricity Theft**. This is a **CRIMINAL** offense (Theft).
+    - "Cheating" (420) is **Criminal**.
+    - "Bail" matters are **Criminal**.
+
+    ---
+
+    RESPONSE FORMAT (JSON ONLY):
     {
-      "specialization": "Family|Criminal|Property|Corporate|Cyber|Civil",
-      "subSpecialty": "Specific sub-specialty name",
+      "reasoning": "Explain your classification logic step-by-step. Mention specific keywords found.",
+      "specialization": "Criminal|Family|Property|Corporate|Cyber|Civil",
+      "subSpecialty": "The most precise sub-category from the Knowledge Base (e.g., 'Murder & Homicide', 'Income Tax', 'Medical Negligence')",
       "severity": "High|Medium|Low",
       "urgency": "Immediate|High|Normal|Low",
-      "description": "Brief description of the legal matter",
+      "description": "A professional legal summary of the case",
       "keywords": ["keyword1", "keyword2", "keyword3"],
-      "caseType": "Brief category name"
+      "caseType": "Brief display title (e.g., 'Tax Dispute')"
     }
-    
-    PRIORITY ANALYSIS:
-    
-    🚨 CRIMINAL MATTERS (Highest Priority):
-    - kill/murder/death → "Murder & Homicide", severity: High, urgency: Immediate
-    - assault/violence/abuse → "Assault & Violence", severity: High, urgency: High
-    - theft/robbery → "Theft & Robbery", severity: Medium, urgency: High
-    - fraud/scam → "White Collar Crimes", severity: Medium, urgency: High
-    
-    👨‍👩‍👧‍👦 FAMILY MATTERS:
-    - divorce/separation → "Divorce & Custody", severity: Medium, urgency: Normal
-    - child custody → "Child Custody & Support", severity: Medium, urgency: Normal
-    - domestic violence → "Domestic Violence & Protection", severity: High, urgency: High
-    - inheritance/will → "Inheritance & Will Disputes", severity: Medium, urgency: Normal
-    
-    🏠 PROPERTY MATTERS (Very Common):
-    - land/property dispute → "Land Disputes & Title Issues", severity: High, urgency: High
-    - brother/sister/family property → "Land Disputes & Title Issues", severity: High, urgency: High
-    - illegal occupation/taken over → "Land Disputes & Title Issues", severity: High, urgency: High
-    - ancestral/joint property → "Land Disputes & Title Issues", severity: High, urgency: High
-    - house/real estate → "Real Estate Disputes", severity: Medium, urgency: Normal
-    
-    💼 CORPORATE MATTERS:
-    - business/contract → "Business Contracts", severity: Medium, urgency: Normal
-    - company/compliance → "Company Formation & Compliance", severity: Low, urgency: Normal
-    - M&A/business sale → "Mergers & Acquisitions", severity: High, urgency: Normal
-    
-    💻 CYBER MATTERS:
-    - hacking/fraud online → "Cyber Crime & Hacking", severity: High, urgency: Immediate
-    - data privacy → "Data Privacy & Security", severity: Medium, urgency: High
-    
-    ⚖️ CIVIL MATTERS:
-    - injury/accident → "Personal Injury & Accidents", severity: Medium, urgency: Normal
-    - consumer dispute → "Consumer Disputes", severity: Low, urgency: Normal
-    - employment issue → "Employment & Labor Law", severity: Medium, urgency: Normal
-    
-    KEYWORDS TO WATCH FOR:
-    - Property: land, house, property, brother, sister, family, ancestral, joint, occupation, taken, share, plot
-    - Criminal: kill, murder, death, assault, theft, fraud, violence, abuse
-    - Family: divorce, custody, wife, husband, marriage, children, domestic
-    - Corporate: business, contract, company, partnership, M&A
-    - Cyber: online, hacking, fraud, data, privacy, cyber
-    
-    Be thorough but decisive. Pick the most appropriate category based on the main issue.
     `;
 
     const result = await model.generateContent(analysisPrompt);
@@ -575,243 +593,20 @@ app.post("/api/analyze-case", async (req, res) => {
   } catch (error) {
     console.error("Gemini API Error:", error);
 
-    // Enhanced fallback with sub-specialty detection
-    const text = caseDescription.toLowerCase();
-    let analysis = {
-      specialization: "General",
-      subSpecialty: "General Practice",
-      severity: "Medium",
-      urgency: "Normal",
-      description: "Legal matter requiring professional consultation",
-      keywords: [],
-      caseType: "Civil Matter"
-    };
-
-    // Enhanced keyword matching with sub-specialties - more comprehensive patterns
-    const words = text.split(/\s+/);
-    const hasWord = (word) => words.includes(word);
-    const hasAnyWord = (wordList) => wordList.some(word => text.includes(word));
-    const hasWordsInSequence = (word1, word2) => text.includes(word1) && text.includes(word2);
+    // Enhanced fallback using the comprehensive rules engine from specializations.js
+    // This ensures consistent classification even if the AI fails or is blocked
+    const fallbackAnalysis = findBestSpecialization(caseDescription, city);
     
-    // CRIMINAL MATTERS - Highest priority
-    if (hasAnyWord(["kill", "killed", "killing", "murder", "homicide", "death", "die"]) ||
-        hasWordsInSequence("father", "kill") || hasWordsInSequence("mother", "kill") ||
-        hasWordsInSequence("family", "kill") || hasWordsInSequence("someone", "kill")) {
-      analysis = {
-        specialization: "Criminal",
-        subSpecialty: "Murder & Homicide",
-        severity: "High",
-        urgency: "Immediate",
-        description: "Extremely serious criminal matter involving homicide charges - immediate legal assistance required",
-        keywords: ["murder", "homicide", "killing", "criminal", "death"],
-        caseType: "Homicide"
-      };
-    } else if (hasAnyWord(["assault", "violence", "abuse", "harassment", "threat", "hurt", "harm"]) ||
-               hasWordsInSequence("domestic", "violence") || hasWordsInSequence("physical", "harm")) {
-      analysis = {
-        specialization: "Criminal",
-        subSpecialty: "Assault & Violence",
-        severity: "High",
-        urgency: "High",
-        description: "Criminal matter involving assault, violence, or abuse - urgent legal assistance needed",
-        keywords: ["assault", "violence", "abuse", "harassment", "threat"],
-        caseType: "Assault/Violence"
-      };
-    } else if (hasAnyWord(["theft", "stealing", "robbery", "burglary", "stolen", "cheat", "scam", "snatched", "seized", "confiscated"])) {
-      analysis = {
-        specialization: "Criminal",
-        subSpecialty: "Theft & Robbery",
-        severity: "High",
-        urgency: "Immediate",
-        description: "Criminal matter involving theft, robbery, or illegal seizure of property - immediate legal assistance required",
-        keywords: ["theft", "robbery", "stealing", "snatched", "seized", "property"],
-        caseType: "Theft/Robbery"
-      };
-    }
-    // FAMILY MATTERS
-    else if (hasAnyWord(["divorce", "separation", "divorced"]) ||
-              hasWordsInSequence("file", "divorce") || hasWordsInSequence("want", "divorce")) {
-      analysis = {
-        specialization: "Family",
-        subSpecialty: "Divorce & Custody",
-        severity: "Medium",
-        urgency: "Normal",
-        description: "Family law matter involving divorce or separation proceedings",
-        keywords: ["divorce", "separation", "custody", "family"],
-        caseType: "Divorce/Separation"
-      };
-    } else if (hasAnyWord(["custody", "child", "children", "maintenance", "alimony"]) ||
-               hasWordsInSequence("child", "custody") || hasWordsInSequence("child", "support")) {
-      analysis = {
-        specialization: "Family",
-        subSpecialty: "Child Custody & Support",
-        severity: "Medium",
-        urgency: "Normal",
-        description: "Family law matter involving child custody or support",
-        keywords: ["custody", "child", "support", "maintenance", "alimony"],
-        caseType: "Child Custody"
-      };
-    } else if (hasAnyWord(["wife", "husband", "married", "marriage"]) &&
-               hasAnyWord(["problem", "dispute", "issue", "trouble", "fight"])) {
-      analysis = {
-        specialization: "Family",
-        subSpecialty: "Marriage & Divorce",
-        severity: "Medium",
-        urgency: "Normal",
-        description: "Family law matter involving marital disputes",
-        keywords: ["marriage", "wife", "husband", "family"],
-        caseType: "Marital Dispute"
-      };
-    } else if (hasAnyWord(["inheritance", "will", "succession", "property", "share"]) &&
-               hasAnyWord(["father", "mother", "parent", "family", "brother", "sister"])) {
-      analysis = {
-        specialization: "Family",
-        subSpecialty: "Inheritance & Will Disputes",
-        severity: "Medium",
-        urgency: "Normal",
-        description: "Family law matter involving inheritance or will disputes",
-        keywords: ["inheritance", "will", "succession", "property"],
-        caseType: "Inheritance Dispute"
-      };
-    }
-    // PROPERTY MATTERS - Very comprehensive patterns
-    else if (hasAnyWord(["property", "land", "house", "home", "real estate", "flat", "apartment"]) ||
-             hasAnyWord(["plot", "ground", "site", "building"]) ||
-             (hasAnyWord(["brother", "sister", "family", "relative"]) &&
-              hasAnyWord(["property", "land", "house", "share", "take", "took"]))) {
-      analysis = {
-        specialization: "Property",
-        subSpecialty: "Land Disputes & Title Issues",
-        severity: "High",
-        urgency: "High",
-        description: "Property dispute involving ownership, title, or possession issues",
-        keywords: ["property", "land", "dispute", "title", "possession", "ownership"],
-        caseType: "Property Dispute"
-      };
-    } else if (hasAnyWord(["illegal", "occupation", "occupied", "takeover", "taken", "seized"]) ||
-               hasWordsInSequence("illegal", "occupation") || hasWordsInSequence("taken", "over") ||
-               hasWordsInSequence("property", "taken")) {
-      analysis = {
-        specialization: "Property",
-        subSpecialty: "Land Disputes & Title Issues",
-        severity: "High",
-        urgency: "Immediate",
-        description: "Urgent property matter involving illegal occupation or takeover",
-        keywords: ["illegal", "occupation", "takeover", "property", "urgent"],
-        caseType: "Illegal Occupation"
-      };
-    } else if (hasAnyWord(["ancestral", "joint", "partition", "share", "portion", "half"]) ||
-               hasWordsInSequence("ancestral", "property") || hasWordsInSequence("joint", "property") ||
-               hasWordsInSequence("property", "partition") || hasWordsInSequence("half", "plot")) {
-      analysis = {
-        specialization: "Property",
-        subSpecialty: "Land Disputes & Title Issues",
-        severity: "High",
-        urgency: "High",
-        description: "Property dispute involving ancestral or joint family property partition",
-        keywords: ["ancestral", "joint", "partition", "property", "family"],
-        caseType: "Property Partition"
-      };
-    }
-    // CORPORATE MATTERS
-    else if (hasAnyWord(["business", "company", "firm", "partnership", "corporate"]) ||
-             hasWordsInSequence("business", "dispute") || hasWordsInSequence("company", "matter")) {
-      analysis = {
-        specialization: "Corporate",
-        subSpecialty: "Business Contracts",
-        severity: "Medium",
-        urgency: "Normal",
-        description: "Matter involving business or corporate legal issues",
-        keywords: ["business", "company", "corporate", "contract"],
-        caseType: "Business Matter"
-      };
-    } else if (hasAnyWord(["contract", "agreement", "breach", "violation", "terms"])) {
-      analysis = {
-        specialization: "Corporate",
-        subSpecialty: "Business Contracts",
-        severity: "Medium",
-        urgency: "Normal",
-        description: "Matter involving business contracts or agreement breaches",
-        keywords: ["contract", "agreement", "business", "breach"],
-        caseType: "Contract Dispute"
-      };
-    }
-    // POLICE/GOVERNMENT ACTIONS - New category for police-related issues
-    else if (hasAnyWord(["cop", "police", "seized", "snatched", "confiscated", "arrested", "detained"]) ||
-             hasWordsInSequence("cop", "snatched") || hasWordsInSequence("police", "seized") ||
-             hasWordsInSequence("bike", "seized") || hasWordsInSequence("vehicle", "taken")) {
-      analysis = {
-        specialization: "Criminal",
-        subSpecialty: "Criminal Procedure & Constitutional Law",
-        severity: "High",
-        urgency: "Immediate",
-        description: "Legal matter involving police action, property seizure, or violation of rights - immediate legal assistance required",
-        keywords: ["police", "seized", "snatched", "constitutional", "crpc", "rights"],
-        caseType: "Police Action"
-      };
-    }
-    // CYBER MATTERS
-    else if (hasAnyWord(["cyber", "online", "hacking", "hack", "data", "privacy"]) ||
-             hasWordsInSequence("online", "fraud") || hasWordsInSequence("cyber", "crime") ||
-             hasWordsInSequence("account", "hacked")) {
-      analysis = {
-        specialization: "Cyber",
-        subSpecialty: "Cyber Crime & Hacking",
-        severity: "High",
-        urgency: "Immediate",
-        description: "Matter involving cyber crime, hacking, or online fraud",
-        keywords: ["cyber", "online", "hacking", "fraud", "data"],
-        caseType: "Cyber Crime"
-      };
-    }
-    // CIVIL MATTERS
-    else if (hasAnyWord(["injury", "accident", "compensation", "claim"]) ||
-             hasWordsInSequence("personal", "injury") || hasWordsInSequence("car", "accident")) {
-      analysis = {
-        specialization: "Civil",
-        subSpecialty: "Personal Injury & Accidents",
-        severity: "Medium",
-        urgency: "Normal",
-        description: "Civil matter involving injury claims or accident compensation",
-        keywords: ["injury", "accident", "compensation", "claim"],
-        caseType: "Personal Injury"
-      };
-    } else if (hasAnyWord(["consumer", "product", "service", "complaint", "refund"])) {
-      analysis = {
-        specialization: "Civil",
-        subSpecialty: "Consumer Disputes",
-        severity: "Low",
-        urgency: "Normal",
-        description: "Civil matter involving consumer rights or product issues",
-        keywords: ["consumer", "product", "service", "complaint"],
-        caseType: "Consumer Dispute"
-      };
-    } else if (hasAnyWord(["employment", "job", "work", "employer", "employee", "salary", "termination"])) {
-      analysis = {
-        specialization: "Civil",
-        subSpecialty: "Employment & Labor Law",
-        severity: "Medium",
-        urgency: "Normal",
-        description: "Civil matter involving employment or labor disputes",
-        keywords: ["employment", "job", "work", "employer", "labor"],
-        caseType: "Employment Dispute"
-      };
-    }
-    // DEFAULT FALLBACK
-    else {
-      // Try to determine at least a basic category
-      if (text.length > 10) {
-        analysis = {
-          specialization: "Civil",
-          subSpecialty: "General Practice",
-          severity: "Medium",
-          urgency: "Normal",
-          description: "Legal matter requiring professional consultation and analysis",
-          keywords: ["legal", "consultation", "advice"],
-          caseType: "General Legal Matter"
-        };
-      }
-    }
+    const analysis = {
+      specialization: fallbackAnalysis.specialization,
+      subSpecialty: fallbackAnalysis.subSpecialty,
+      severity: fallbackAnalysis.severity,
+      urgency: fallbackAnalysis.urgency,
+      description: fallbackAnalysis.description,
+      keywords: fallbackAnalysis.keywords,
+      caseType: fallbackAnalysis.subSpecialty,
+      reasoning: `Automated Keyword Analysis: Matched keywords [${fallbackAnalysis.keywords.join(', ')}] to category '${fallbackAnalysis.specialization}'`
+    };
 
     const db = readDB();
     
@@ -920,7 +715,7 @@ app.post("/api/analyze-case", async (req, res) => {
       severity: analysis.severity === "High" ? "Serious" : analysis.severity === "Medium" ? "Moderate" : "Minor",
       urgency: analysis.urgency,
       recommendedLawyerType: `${analysis.specialization} Lawyer specializing in ${analysis.subSpecialty}`,
-      relevantLaws: [],
+      relevantLaws: fallbackAnalysis.relevantLaws || [],
       immediateSteps: ["Consult a qualified lawyer immediately", "Gather all relevant documents", "Follow legal advice carefully"],
       documentsNeeded: ["Identity proof", "Address proof", "Case-related documents"],
       legalProcess: "Your lawyer will guide you through the specific legal process based on your case details.",
