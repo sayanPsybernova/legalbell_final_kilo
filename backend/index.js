@@ -313,6 +313,64 @@ function calculateSimilarity(str1, str2) {
   return (longer.length - editDistance) / longer.length;
 }
 
+// ... (previous code)
+
+// Context from: https://www.advocateshivakumar.com/2025/11/types-of-court-cases-in-india-complete.html
+const INDIAN_COURT_CASES_CONTEXT = `
+**Types of Court Cases in India & Relevant Acts**
+
+1. **Criminal Cases**: Offenses against State/society.
+   - *Acts/Sections*: IPC (Theft, Cheating 420, Assault, Murder 302), CrPC (Bail, Anticipatory Bail, Quash 482), NDPS Act (Drugs), POCSO Act, Domestic Violence Act (498A), Negotiable Instruments Act (Cheque Bounce Sec 138).
+   
+2. **Civil Cases**: Disputes between individuals/organizations.
+   - *Types*: Property disputes, Injunction suits, Partition suits, Specific Performance, Money Recovery suits, Rent Control.
+   - *Acts*: CPC (Civil Procedure Code), Specific Relief Act, Transfer of Property Act.
+
+3. **Family & Matrimonial Cases**: Family Courts.
+   - *Types*: Divorce (Mutual/Contested), Maintenance (Sec 125 CrPC), Child Custody, Restitution of Conjugal Rights (RCR), Guardianship.
+   - *Acts*: Hindu Marriage Act, Special Marriage Act, DV Act.
+
+4. **Consumer Cases**: Consumer Commissions.
+   - *Types*: Deficiency of service, Unfair trade practices, Real-estate builder disputes, Insurance claim rejections, Product defects.
+   - *Acts*: Consumer Protection Act 2019.
+
+5. **Labour & Industrial Cases**: Employer-employee disputes.
+   - *Types*: Illegal termination, Back wages, Gratuity, Bonus, PF issues.
+   - *Acts*: Industrial Disputes Act, Payment of Gratuity Act.
+
+6. **Corporate & Commercial Cases**: NCLT / Commercial Courts.
+   - *Types*: Insolvency & Bankruptcy (IBC), Company Law disputes, Shareholder oppression, Mergers.
+   - *Acts*: Companies Act 2013, IBC 2016.
+
+7. **Taxation Cases**: Government tax disputes.
+   - *Types*: GST appeals, Income Tax appeals, Customs & Excise.
+   - *Acts*: GST Act, Income Tax Act 1961.
+
+8. **Revenue & Land Matters**: Tahsildar/Collector/Revenue Courts.
+   - *Types*: Mutation, Pattadar passbook, Land survey, Encroachment.
+   - *Acts*: State Land Revenue Acts.
+
+9. **Writ Petitions**: High Court / Supreme Court (Constitutional).
+   - *Types*: Mandamus (Order to official), Habeas Corpus (Missing person), Certiorari (Quash order), PIL (Public Interest).
+   - *Acts*: Constitution of India (Art 226, Art 32).
+
+10. **Motor Accident Claims (MACT)**: Road accidents.
+    - *Types*: Injury compensation, Death claims, Third-party insurance.
+    - *Acts*: Motor Vehicles Act.
+
+11. **Intellectual Property (IPR)**: Business rights.
+    - *Types*: Trademark infringement, Copyright violation, Patent disputes.
+    - *Acts*: Trademarks Act, Copyright Act.
+
+12. **Cyber Law Cases**: Online offenses.
+    - *Types*: Online fraud, Phishing, Cyber-stalking, Data theft.
+    - *Acts*: Information Technology Act 2000.
+
+13. **Arbitration & ADR**: Out-of-court settlement.
+    - *Types*: Contractual disputes with arbitration clause.
+    - *Acts*: Arbitration and Conciliation Act 1996.
+`;
+
 // Analyze case using real Gemini AI
 app.post("/api/analyze-case", async (req, res) => {
   const { caseDescription, city } = req.body;
@@ -341,6 +399,9 @@ app.post("/api/analyze-case", async (req, res) => {
     // First, get comprehensive legal guidance
     const guidancePrompt = `
     You are an expert Indian legal advisor providing detailed guidance for a legal case. Analyze the case description and provide comprehensive legal advice.
+    
+    Use the following Indian Legal Context to inform your analysis:
+    ${INDIAN_COURT_CASES_CONTEXT}
 
     Case Description: "${caseDescription}"
     City: "${city}"
@@ -374,7 +435,7 @@ app.post("/api/analyze-case", async (req, res) => {
     IMPORTANT GUIDELINES:
     - Focus on Indian law context
     - Provide practical, actionable advice
-    - Include specific sections of relevant Indian laws (CrPC, IPC, etc.)
+    - Include specific sections of relevant Indian laws (CrPC, IPC, etc.) based on the context provided.
     - Give realistic timelines and cost estimates
     - Consider the city context for local procedures
     - Be thorough but clear and organized
@@ -419,6 +480,9 @@ app.post("/api/analyze-case", async (req, res) => {
     // Now get the lawyer matching analysis
     const analysisPrompt = `
     You are a highly intelligent legal AI assistant for the Indian judicial system. Your goal is to analyze a case description and classify it into the correct legal domain for lawyer matching.
+
+    Use the following Indian Legal Context to inform your classification:
+    ${INDIAN_COURT_CASES_CONTEXT}
 
     CASE DESCRIPTION: "${caseDescription}"
 
@@ -468,6 +532,7 @@ app.post("/api/analyze-case", async (req, res) => {
     `;
 
     const result = await model.generateContent(analysisPrompt);
+    // ... (rest of the function)
     const response = await result.response;
     const text = response.text();
 

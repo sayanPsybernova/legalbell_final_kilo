@@ -33,7 +33,7 @@ export default function LawyerResults({ lawyers, params, onSelect, onBackToChat,
         <h3 className="text-lg font-semibold text-slate-800 mb-4 border-l-4 border-blue-600 pl-3">{title}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sectionLawyers.map(l=>(
-            <div key={l.id} className="group bg-white rounded-2xl p-5 shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
+            <div key={l.id} className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-blue-300 transition-all duration-200 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4">
                  {showBadge && getMatchBadge(l)}
               </div>
@@ -70,7 +70,7 @@ export default function LawyerResults({ lawyers, params, onSelect, onBackToChat,
                 </div>
                 <button 
                   onClick={()=>onSelect(l)}
-                  className="bg-slate-900 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors shadow-sm hover:shadow-md"
+                  className="bg-blue-600 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
                 >
                   Book Now
                 </button>
@@ -94,7 +94,7 @@ export default function LawyerResults({ lawyers, params, onSelect, onBackToChat,
           </div>
         </div>
         <button
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors font-medium shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors font-medium shadow-sm"
           onClick={onBackToChat}
         >
           <ArrowLeft className="w-4 h-4" /> Back to Chat
@@ -119,7 +119,7 @@ export default function LawyerResults({ lawyers, params, onSelect, onBackToChat,
       
       {/* Legal Guidance Section */}
       {legalGuidance && (
-        <div className="bg-amber-50 rounded-2xl p-6 sm:p-8 border border-amber-100 shadow-sm mb-10 relative overflow-hidden">
+        <div className="bg-amber-50 rounded-2xl p-6 sm:p-8 ring-1 ring-amber-900/5 shadow-md mb-10 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100 rounded-full -mr-10 -mt-10 opacity-50 blur-2xl"></div>
           
           <div className="flex items-center gap-3 mb-6 relative z-10">
@@ -276,7 +276,7 @@ export default function LawyerResults({ lawyers, params, onSelect, onBackToChat,
       )}
       
       {lawyers.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center">
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Briefcase className="w-8 h-8 text-slate-400" />
           </div>

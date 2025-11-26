@@ -28,7 +28,7 @@ export default function BookingFlow({ lawyer, user, existingBookings, onConfirm 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Lawyer Info Card */}
         <div className="col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-24">
+            <div className="bg-white rounded-2xl shadow-md ring-1 ring-slate-900/5 p-6 sticky top-24">
                 <div className="flex flex-col items-center text-center">
                     <div className="w-24 h-24 rounded-full p-1 bg-blue-50 mb-4">
                         <img src={lawyer.image} className="w-full h-full rounded-full object-cover border-2 border-white shadow-sm" alt={lawyer.name} />
@@ -54,16 +54,13 @@ export default function BookingFlow({ lawyer, user, existingBookings, onConfirm 
 
         {/* Booking Controls */}
         <div className="col-span-1 md:col-span-2 space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <h3 className="font-semibold text-slate-900 mb-4 flex items-center">
-                    <Calendar className="w-5 h-5 mr-2 text-blue-600" /> Select Date & Duration
-                </h3>
+            <div className="bg-white rounded-2xl shadow-md ring-1 ring-slate-900/5 p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">Date</label>
                         <input 
                             type="date" 
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all"
                             onChange={e=>setDate(e.target.value)} 
                         />
                     </div>
@@ -72,7 +69,7 @@ export default function BookingFlow({ lawyer, user, existingBookings, onConfirm 
                         <select 
                             value={duration} 
                             onChange={e=>setDuration(Number(e.target.value))}
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none"
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all appearance-none"
                         >
                             <option value={1}>1 Hour Session</option>
                             <option value={2}>2 Hours Session</option>
@@ -82,7 +79,7 @@ export default function BookingFlow({ lawyer, user, existingBookings, onConfirm 
             </div>
 
             {date && (
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="bg-white rounded-2xl shadow-md ring-1 ring-slate-900/5 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <h3 className="font-semibold text-slate-900 mb-4 flex items-center">
                         <Clock className="w-5 h-5 mr-2 text-blue-600" /> Available Slots
                     </h3>
@@ -107,7 +104,7 @@ export default function BookingFlow({ lawyer, user, existingBookings, onConfirm 
                 </div>
             )}
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-white rounded-2xl shadow-md ring-1 ring-slate-900/5 p-6">
                  <div className="flex justify-between items-center mb-6">
                      <div>
                          <p className="text-slate-500 text-sm">Total Amount</p>
@@ -126,7 +123,7 @@ export default function BookingFlow({ lawyer, user, existingBookings, onConfirm 
                  <button 
                     disabled={!selectedSlot} 
                     onClick={()=> onConfirm({ lawyerId: lawyer.id, lawyerName: lawyer.name, clientId: user.id, clientName: user.name, date, time:selectedSlot, duration, fee: lawyer.fee * duration })}
-                    className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl active:scale-[0.99]"
+                    className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
                 >
                     Confirm & Pay
                 </button>

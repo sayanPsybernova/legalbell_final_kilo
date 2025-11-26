@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, Sparkles } from 'lucide-react'
+import { Send, Bot, User, Sparkles, Shield, Clock, Users, CheckCircle, ArrowRight, Star, Scale, Gavel } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function LandingChat({ onSearchComplete }) {
@@ -11,6 +11,7 @@ export default function LandingChat({ onSearchComplete }) {
     caseDescription: null,
     awaitingClarification: false
   })
+  const [showChat, setShowChat] = useState(false)
   const endRef = useRef()
 
   useEffect(()=> endRef.current?.scrollIntoView({behavior:'smooth'}), [messages])
@@ -171,83 +172,300 @@ export default function LandingChat({ onSearchComplete }) {
     }
   }
 
-  return (
-    <div className="flex flex-col h-[calc(100vh-140px)] max-w-3xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col h-full">
-            {/* Chat Header */}
-            <div className="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between sticky top-0 z-10">
+  if (!showChat) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+        {/* Hero Section */}
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10"></div>
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-32">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-center"
+            >
+              <div className="flex justify-center mb-8">
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  className="relative"
+                >
+                  <div className="absolute inset-0 bg-blue-600 rounded-2xl blur-xl opacity-20 animate-pulse"></div>
+                  <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 p-4 rounded-2xl shadow-2xl">
+                    <Gavel className="w-12 h-12 text-white" />
+                  </div>
+                </motion.div>
+              </div>
+              
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.8 }}
+                className="text-5xl sm:text-6xl lg:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-900 mb-6 leading-tight"
+              >
+                Legal<span className="text-blue-600">Bell</span>
+              </motion.h1>
+              
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.8 }}
+                className="text-xl sm:text-2xl text-slate-600 max-w-3xl mx-auto mb-8 leading-relaxed"
+              >
+                Connect with expert lawyers instantly. AI-powered legal guidance and personalized lawyer matching at your fingertips.
+              </motion.p>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.8 }}
+                className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+              >
+                <button
+                  onClick={() => setShowChat(true)}
+                  className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex items-center gap-3 text-lg"
+                >
+                  <span>Find Your Lawyer</span>
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-indigo-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </button>
+                
+                <div className="flex items-center gap-2 text-slate-500">
+                  <Shield className="w-5 h-5 text-green-500" />
+                  <span className="text-sm font-medium">100% Confidential</span>
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Features Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.8 }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: <Bot className="w-6 h-6" />,
+                title: "AI-Powered Analysis",
+                description: "Get instant legal guidance with our advanced AI that analyzes your case and recommends the best approach.",
+                color: "from-blue-500 to-cyan-500"
+              },
+              {
+                icon: <Users className="w-6 h-6" />,
+                title: "Expert Lawyers",
+                description: "Connect with verified legal professionals specializing in your specific legal needs.",
+                color: "from-indigo-500 to-purple-500"
+              },
+              {
+                icon: <Clock className="w-6 h-6" />,
+                title: "Instant Consultation",
+                description: "Book appointments online or offline. Get legal help when you need it, where you need it.",
+                color: "from-emerald-500 to-teal-500"
+              }
+            ].map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 + index * 0.1, duration: 0.6 }}
+                className="group relative"
+              >
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity blur"></div>
+                <div className="relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100">
+                  <div className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${feature.color} text-white mb-6`}>
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
+                  <p className="text-slate-600 leading-relaxed">{feature.description}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Trust Indicators */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1, duration: 0.8 }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 pb-20"
+        >
+          <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-3xl p-8 border border-slate-200">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+              {[
+                { number: "10K+", label: "Happy Clients" },
+                { number: "500+", label: "Expert Lawyers" },
+                { number: "98%", label: "Success Rate" },
+                { number: "24/7", label: "Support Available" }
+              ].map((stat, index) => (
+                <div key={index}>
+                  <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
+                    {stat.number}
+                  </div>
+                  <div className="text-sm text-slate-600 font-medium">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Testimonials */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2, duration: 0.8 }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20"
+        >
+          <h2 className="text-3xl font-bold text-center text-slate-900 mb-12">What Our Clients Say</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                name: "Sarah Johnson",
+                role: "Business Owner",
+                content: "LegalBell connected me with the perfect corporate lawyer. The AI analysis was incredibly accurate and saved me hours of research.",
+                rating: 5
+              },
+              {
+                name: "Michael Chen",
+                role: "Individual Client",
+                content: "Found an excellent family lawyer through LegalBell. The process was smooth and the consultation was scheduled within minutes.",
+                rating: 5
+              },
+              {
+                name: "Emily Rodriguez",
+                role: "Startup Founder",
+                content: "The AI guidance helped me understand my legal needs before even talking to a lawyer. Highly recommend this platform!",
+                rating: 5
+              }
+            ].map((testimonial, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.3 + index * 0.1, duration: 0.6 }}
+                className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100"
+              >
+                <div className="flex items-center gap-1 mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-slate-600 mb-4 italic">"{testimonial.content}"</p>
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 rounded-full">
-                        <Sparkles className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                        <h2 className="font-semibold text-slate-900">Legal Assistant</h2>
-                        <p className="text-xs text-slate-500">Powered by Gemini AI</p>
-                    </div>
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold">
+                    {testimonial.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-900">{testimonial.name}</div>
+                    <div className="text-sm text-slate-500">{testimonial.role}</div>
+                  </div>
                 </div>
-                <div className="text-xs font-medium px-2 py-1 bg-green-100 text-green-700 rounded-full flex items-center gap-1">
-                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    Online
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* CTA Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.4, duration: 0.8 }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20"
+        >
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-12 text-center text-white relative overflow-hidden">
+            <div className="absolute inset-0 bg-black opacity-10"></div>
+            <div className="relative z-10">
+              <h2 className="text-4xl font-bold mb-4">Ready to Get Legal Help?</h2>
+              <p className="text-xl mb-8 opacity-90">Start your journey with AI-powered legal guidance today</p>
+              <button
+                onClick={() => setShowChat(true)}
+                className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex items-center gap-3 mx-auto text-lg"
+              >
+                <Scale className="w-5 h-5" />
+                <span>Start Free Consultation</span>
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-100px)] max-w-4xl mx-auto relative">
+        {/* Chat Header */}
+        <div className="px-6 py-4 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-slate-200 rounded-t-2xl shadow-sm z-10 shrink-0">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg">
+                    <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                    <h2 className="text-lg font-semibold text-slate-900">Legal Assistant</h2>
+                    <p className="text-xs text-slate-500">AI-powered legal guidance</p>
                 </div>
             </div>
+            <button
+              onClick={() => setShowChat(false)}
+              className="text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <ArrowRight className="w-5 h-5 rotate-180" />
+            </button>
+        </div>
 
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-slate-50/50 scroll-smooth">
-                {messages.map((m, i) => (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                        key={i} 
-                        className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} items-start gap-3`}
-                    >
-                        {m.role === 'ai' && (
-                            <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm shrink-0 mt-1">
-                                <Bot className="w-5 h-5 text-blue-600" />
-                            </div>
-                        )}
-                        
-                        <div 
-                            className={`max-w-[85%] sm:max-w-[75%] p-4 shadow-sm whitespace-pre-wrap leading-relaxed ${
-                                m.role === 'user' 
-                                ? 'bg-blue-600 text-white rounded-2xl rounded-tr-none' 
-                                : 'bg-white text-slate-800 border border-slate-200 rounded-2xl rounded-tl-none'
-                            }`}
-                        >
-                            {m.text}
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-8 space-y-6 scroll-smooth bg-gradient-to-b from-white to-slate-50">
+            {messages.map((m, i) => (
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    key={i}
+                    className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} items-start gap-4 group`}
+                >
+                    {m.role === 'ai' && (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shrink-0 mt-1 text-white">
+                            <Bot className="w-6 h-6" />
                         </div>
-
-                        {m.role === 'user' && (
-                            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shadow-sm shrink-0 mt-1">
-                                <User className="w-5 h-5 text-slate-600" />
-                            </div>
-                        )}
-                    </motion.div>
-                ))}
-                <div ref={endRef}></div>
-            </div>
-
-            {/* Input Area */}
-            <div className="p-4 bg-white border-t border-slate-100">
-                <div className="relative flex items-center gap-2">
-                    <input 
-                        value={input} 
-                        onChange={e => setInput(e.target.value)} 
-                        onKeyDown={e => e.key === 'Enter' && handleSend()} 
-                        placeholder="Type your message here..." 
-                        className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                    />
-                    <button 
-                        onClick={handleSend}
-                        disabled={!input.trim()}
-                        className="absolute right-2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                    )}
+                    
+                    <div
+                        className={`max-w-[85%] sm:max-w-[75%] text-[15px] leading-relaxed ${
+                            m.role === 'user'
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-3 rounded-[2rem] rounded-tr-none font-medium shadow-lg'
+                            : 'text-slate-800 px-0 py-1 font-normal'
+                        }`}
                     >
-                        <Send className="w-4 h-4" />
-                    </button>
-                </div>
-                <div className="text-center mt-2">
-                    <p className="text-[10px] text-slate-400">AI can make mistakes. Please verify legal advice.</p>
-                </div>
+                        {m.text}
+                    </div>
+                </motion.div>
+            ))}
+            <div ref={endRef} className="h-24"></div> {/* Spacer for floating input */}
+        </div>
+
+        {/* Input Area - Floating Pill */}
+        <div className="absolute bottom-6 left-4 right-4 flex justify-center">
+            <div className="w-full max-w-3xl bg-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200/60 p-2 flex items-center gap-2 focus-within:shadow-[0_8px_30px_rgb(59,130,246,0.15)] focus-within:border-blue-200 transition-all duration-300">
+                <input
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSend()}
+                    placeholder="Describe your legal issue..."
+                    className="flex-1 pl-6 pr-4 py-3 bg-transparent border-none text-slate-800 placeholder:text-slate-400 focus:outline-none text-[15px]"
+                />
+                <button
+                    onClick={handleSend}
+                    disabled={!input.trim()}
+                    className="p-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md active:scale-95 shrink-0"
+                >
+                    <Send className="w-4 h-4" />
+                </button>
             </div>
         </div>
     </div>

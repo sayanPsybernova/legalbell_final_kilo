@@ -20,14 +20,14 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
       {onBackToResults && (
         <button
           onClick={onBackToResults}
-          className="flex items-center text-slate-500 hover:text-slate-800 mb-6 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors font-medium shadow-sm mb-6"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Search Results
         </button>
       )}
       
-      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-8 pt-8 pb-6">
             <h2 className="text-2xl font-bold text-center text-slate-900 mb-2">
                 {isRegister ? `Create ${role === 'client' ? 'Client' : 'Lawyer'} Account` : 'Welcome Back'}
@@ -60,7 +60,7 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
                         <input 
                             required 
                             placeholder="Full Name" 
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all"
                             onChange={e=>setFormData({...formData,name:e.target.value})} 
                         />
                     </div>
@@ -71,7 +71,7 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
                                 <input 
                                     required 
                                     placeholder="City (e.g. Mumbai)" 
-                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all"
                                     onChange={e=>setFormData({...formData,city:e.target.value})} 
                                 />
                             </div>
@@ -79,7 +79,7 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
                                 <div className="relative">
                                     <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                     <select 
-                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all appearance-none"
                                         onChange={e=>setFormData({...formData,specialization:e.target.value})} 
                                         value={formData.specialization}
                                     >
@@ -92,7 +92,7 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
                                         required 
                                         type="number" 
                                         placeholder="Yrs Exp." 
-                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all"
                                         onChange={e=>setFormData({...formData,experience:e.target.value})} 
                                     />
                                 </div>
@@ -103,7 +103,7 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
                                     required 
                                     type="number" 
                                     placeholder="Hourly Fee ($)" 
-                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all"
                                     onChange={e=>setFormData({...formData,fee:e.target.value})} 
                                 />
                             </div>
@@ -118,7 +118,7 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
                         required 
                         type="email" 
                         placeholder="Email Address" 
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all"
                     />
                 </div>
                 <div className="relative">
@@ -127,13 +127,13 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
                         required 
                         type="password" 
                         placeholder="Password" 
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all"
                     />
                 </div>
 
                 <button 
                     type="submit"
-                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
+                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 hover:-translate-y-0.5 active:translate-y-0"
                 >
                     {isRegister ? 'Create Account' : 'Login'}
                 </button>

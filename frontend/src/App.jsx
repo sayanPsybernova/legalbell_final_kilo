@@ -60,7 +60,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100">
+    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100">
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -91,7 +91,7 @@ export default function App() {
                   </button>
                   <button 
                     onClick={() => setView(user.role === 'lawyer' ? 'lawyer-dash' : 'client-dash')}
-                    className="px-4 py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-all shadow-sm hover:shadow-md"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
                   >
                     Dashboard
                   </button>
@@ -99,7 +99,7 @@ export default function App() {
               ) : (
                 <button 
                   onClick={() => setView('auth')}
-                  className="px-5 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
                 >
                   Login / Register
                 </button>
@@ -232,13 +232,13 @@ export default function App() {
                 <p className="text-slate-600 text-lg mb-8">Your consultation has been successfully booked with <span className="font-semibold text-slate-900">{selectedLawyer?.name}</span>.</p>
                 <div className="flex flex-col sm:flex-row justify-center gap-4">
                   <button 
-                    className="px-6 py-3 border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-colors"
+                    className="px-6 py-3 border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
                     onClick={() => { setSelectedLawyer(null); setView('results'); }}
                   >
                     ← Back to Search
                   </button>
                   <button 
-                    className="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+                    className="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
                     onClick={() => setView(user && user.role === 'lawyer' ? 'lawyer-dash' : 'client-dash')}
                   >
                     Go to Dashboard
