@@ -15,7 +15,7 @@ const DB_FILE = path.join(__dirname, "db.json");
 // Initialize Gemini AI with Safety Settings to allow legal analysis of sensitive topics
 const genAI = new GoogleGenerativeAI("AIzaSyD2fD3IeBNvGq5P6pJEmHoYAYmsH-fDKaY");
 const model = genAI.getGenerativeModel({ 
-  model: "gemini-1.5-flash",
+  model: "gemini-2.5-flash",
   safetySettings: [
     {
       category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
