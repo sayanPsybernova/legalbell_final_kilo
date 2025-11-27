@@ -30331,6 +30331,17 @@
       "fee": 500,
       "image": "https://i.pravatar.cc/150?u=1764257085789",
       "about": ""
+    },
+    {
+      "id": 1764259375772,
+      "name": "marco",
+      "specialization": "Family",
+      "sub_specialty": "divorce",
+      "experience": 20,
+      "location": "delhi",
+      "fee": 2000,
+      "image": "https://i.pravatar.cc/150?u=1764259375772",
+      "about": ""
     }
   ],
   "bookings": [
@@ -30457,6 +30468,60 @@
       "paymentMethod": "upi",
       "paidAt": "2025-11-27T15:59:01.989Z",
       "createdAt": "2025-11-27T15:59:02.003Z"
+    },
+    {
+      "id": 1764259524636,
+      "lawyerId": 1764259375772,
+      "lawyerName": "marco",
+      "clientId": 1764259463234,
+      "clientName": "cmarco",
+      "clientEmail": "cmarco@gmail.com",
+      "date": "2025-11-27",
+      "time": "10:10",
+      "duration": 1,
+      "fee": 2000,
+      "caseType": "General Consultation",
+      "status": "paid",
+      "paymentId": "PAY_1764259524622",
+      "paymentMethod": "upi",
+      "paidAt": "2025-11-27T16:05:24.622Z",
+      "createdAt": "2025-11-27T16:05:24.636Z"
+    },
+    {
+      "id": 1764260775535,
+      "lawyerId": 3641,
+      "lawyerName": "Adv. Meera Patel",
+      "clientId": 1764259463234,
+      "clientName": "cmarco",
+      "clientEmail": "cmarco@gmail.com",
+      "date": "2025-11-27",
+      "time": "09:00",
+      "duration": 1,
+      "fee": 2300,
+      "caseType": "General Consultation",
+      "status": "paid",
+      "paymentId": "PAY_1764260775521",
+      "paymentMethod": "upi",
+      "paidAt": "2025-11-27T16:26:15.521Z",
+      "createdAt": "2025-11-27T16:26:15.535Z"
+    },
+    {
+      "id": 1764261081424,
+      "lawyerId": 1764259375772,
+      "lawyerName": "marco",
+      "clientId": 1764260950514,
+      "clientName": "client2",
+      "clientEmail": "client2@gmail.com",
+      "date": "2025-11-28",
+      "time": "09:00",
+      "duration": 1,
+      "fee": 2000,
+      "caseType": "General Consultation",
+      "status": "paid",
+      "paymentId": "PAY_1764261081410",
+      "paymentMethod": "upi",
+      "paidAt": "2025-11-27T16:31:21.410Z",
+      "createdAt": "2025-11-27T16:31:21.425Z"
     }
   ],
   "users": [
@@ -30567,6 +30632,13 @@
       "role": "client",
       "email": "testclient1764258011878@example.com",
       "password": "9dfcca01bb9a1cf8fa8d2c963b8519cc96a466de23f9a694d22f92c5676f8d05"
+    },
+    {
+      "id": 1764259375772,
+      "name": "marco",
+      "role": "lawyer",
+      "email": "marco@gmail.com",
+      "password": "6eb75519bfc4fdb6680e76e2591054a57af41c1be9fa11cac96866e9c3209bb9"
     }
   ]
 }

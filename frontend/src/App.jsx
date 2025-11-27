@@ -13,6 +13,7 @@ import ClientDashboard from './components/ClientDashboard'
 import LawyerDashboard from './components/LawyerDashboard'
 import VideoRoom from './components/VideoRoom'
 import AIDrafter from './components/AIDrafter'
+import { getBookingPreferences, clearBookingPreferences, saveBookingPreferences } from './utils/bookingPreferences'
 
 export default function App() {
   const [user, setUser] = useState(null)
@@ -76,7 +77,33 @@ export default function App() {
     const res = await axios.post('/api/login', loginData)
     if (res.data.ok) {
       setUser(res.data.user)
-      setView(res.data.user.role === 'lawyer' ? 'lawyer-dash' : 'client-dash')
+      
+      // Check if there are saved booking preferences
+      const bookingPreferences = loginData.bookingPreferences || getBookingPreferences()
+      
+      if (bookingPreferences && bookingPreferences.searchResults && res.data.user.role === 'client') {
+        // User has saved preferences and is a client, restore the search results
+        setSearchParams(bookingPreferences.searchResults)
+        setLawyers(bookingPreferences.searchResults.lawyers || [])
+        setPreviousSearch({
+          params: bookingPreferences.searchResults,
+          lawyers: bookingPreferences.searchResults.lawyers || []
+        })
+        
+        // Check if a specific lawyer was selected
+        if (bookingPreferences.selectedLawyer) {
+          setSelectedLawyer(bookingPreferences.selectedLawyer)
+          setView('booking')
+        } else {
+          setView('results')
+        }
+        
+        // Clear the preferences after using them
+        clearBookingPreferences()
+      } else {
+        // Normal login flow
+        setView(res.data.user.role === 'lawyer' ? 'lawyer-dash' : 'client-dash')
+      }
     } else {
       alert('Invalid email, password, or role. Please try again.')
     }
@@ -210,6 +237,14 @@ export default function App() {
                 onSelect={(l) => {
                   setSelectedLawyer(l);
                   if (!user) {
+                    // Save the selected lawyer to preferences
+                    const currentPreferences = getBookingPreferences()
+                    if (currentPreferences) {
+                      saveBookingPreferences({
+                        ...currentPreferences,
+                        selectedLawyer: l
+                      })
+                    }
                     setPreviousSearch({ params: searchParams, lawyers: lawyers });
                     setView('auth');
                   } else {

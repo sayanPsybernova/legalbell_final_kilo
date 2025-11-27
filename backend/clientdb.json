@@ -23,6 +23,22 @@
       "email": "ctest1@gmail.com",
       "password": "e77caa966568fedcd16482edd544e3fa7e3297d41fe8eaa2aadba2579e359e4c",
       "createdAt": "2025-11-27T15:52:26.705Z"
+    },
+    {
+      "id": 1764259463234,
+      "name": "cmarco",
+      "role": "client",
+      "email": "cmarco@gmail.com",
+      "password": "6eb75519bfc4fdb6680e76e2591054a57af41c1be9fa11cac96866e9c3209bb9",
+      "createdAt": "2025-11-27T16:04:23.234Z"
+    },
+    {
+      "id": 1764260950514,
+      "name": "client2",
+      "role": "client",
+      "email": "client2@gmail.com",
+      "password": "e77caa966568fedcd16482edd544e3fa7e3297d41fe8eaa2aadba2579e359e4c",
+      "createdAt": "2025-11-27T16:29:10.514Z"
     }
   ]
 }

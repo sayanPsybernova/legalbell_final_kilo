@@ -18,6 +18,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { saveBookingPreferences } from "../utils/bookingPreferences";
 
 export default function LandingChat({ onSearchComplete }) {
   const [messages, setMessages] = useState([
@@ -256,7 +257,7 @@ export default function LandingChat({ onSearchComplete }) {
       setMessages((m) => [...m, { role: "ai", text: guidanceMessage }]);
 
       setTimeout(() => {
-        onSearchComplete({
+        const searchResults = {
           location: state.city,
           type:
             data.analysis.caseType || data.analysis.specialization || "General",
@@ -267,7 +268,17 @@ export default function LandingChat({ onSearchComplete }) {
           relatedMatches: data.relatedMatches,
           generalMatches: data.generalMatches,
           caseDescription: state.caseDescription,
+        };
+        
+        // Save booking preferences for later use after login
+        saveBookingPreferences({
+          consultationType: state.consultationType,
+          city: state.city,
+          caseDescription: state.caseDescription,
+          searchResults: searchResults
         });
+        
+        onSearchComplete(searchResults);
       }, 2000);
     } catch (error) {
       console.error("Error analyzing case:", error);

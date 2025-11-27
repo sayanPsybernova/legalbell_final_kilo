@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { User, Mail, Lock, MapPin, Briefcase, DollarSign, Clock, ArrowLeft } from 'lucide-react'
+import { getBookingPreferences } from '../utils/bookingPreferences'
 
 export default function AuthScreen({ onLogin, onRegister, onBackToResults, isClientConnection = false, isFromBooking = false }) {
   const [role, setRole] = useState('client')
@@ -12,7 +13,9 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
     if (isRegister) {
       onRegister({ ...formData, role })
     } else {
-      onLogin({ ...loginData, role })
+      // Check for saved booking preferences when logging in
+      const bookingPreferences = getBookingPreferences()
+      onLogin({ ...loginData, role, bookingPreferences })
     }
   }
 
