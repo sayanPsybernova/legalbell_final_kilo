@@ -7,6 +7,8 @@ import LandingChat from './components/LandingChat'
 import LawyerResults from './components/LawyerResults'
 import AuthScreen from './components/AuthScreen'
 import BookingFlow from './components/BookingFlow'
+import PaymentGateway from './components/PaymentGateway'
+import PaymentSuccess from './components/PaymentSuccess'
 import ClientDashboard from './components/ClientDashboard'
 import LawyerDashboard from './components/LawyerDashboard'
 import VideoRoom from './components/VideoRoom'
@@ -18,6 +20,7 @@ export default function App() {
   const [lawyers, setLawyers] = useState([])
   const [searchParams, setSearchParams] = useState({ location: '', type: '' })
   const [selectedLawyer, setSelectedLawyer] = useState(null)
+  const [bookingData, setBookingData] = useState(null)
   const [bookings, setBookings] = useState([])
   const [previousSearch, setPreviousSearch] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -39,7 +42,25 @@ export default function App() {
 
   const fetchBookings = async () => {
     const res = await axios.get('/api/bookings')
-    setBookings(res.data)
+    const bookings = res.data
+    
+    // Fetch lawyer details for each booking
+    const bookingsWithLawyerDetails = await Promise.all(
+      bookings.map(async (booking) => {
+        try {
+          const lawyerRes = await axios.get(`/api/lawyers/${booking.lawyerId}`)
+          return {
+            ...booking,
+            lawyerDetails: lawyerRes.data
+          }
+        } catch (error) {
+          console.error('Error fetching lawyer details:', error)
+          return booking
+        }
+      })
+    )
+    
+    setBookings(bookingsWithLawyerDetails)
   }
 
   const handleRegister = async (formData) => {
@@ -51,11 +72,13 @@ export default function App() {
     }
   }
 
-  const handleLogin = async (role) => {
-    const res = await axios.post('/api/login', { role })
+  const handleLogin = async (loginData) => {
+    const res = await axios.post('/api/login', loginData)
     if (res.data.ok) {
       setUser(res.data.user)
       setView(res.data.user.role === 'lawyer' ? 'lawyer-dash' : 'client-dash')
+    } else {
+      alert('Invalid email, password, or role. Please try again.')
     }
   }
 
@@ -210,41 +233,37 @@ export default function App() {
               />
             )}
             
-            {view === 'booking' && selectedLawyer && (
-              <BookingFlow 
-                lawyer={selectedLawyer} 
-                user={user} 
-                existingBookings={bookings} 
-                onConfirm={async (b) => { 
-                  await axios.post('/api/bookings', b); 
-                  fetchBookings(); 
-                  setView('booking-confirmed'); 
-                }} 
+            {view === 'booking' && selectedLawyer && user && (
+              <BookingFlow
+                lawyer={selectedLawyer}
+                user={user}
+                existingBookings={bookings}
+                onConfirm={(bookingInfo) => {
+                  setBookingData(bookingInfo)
+                  setView('payment')
+                }}
               />
             )}
             
-            {view === 'booking-confirmed' && (
-              <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-slate-100 p-10 text-center">
-                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                </div>
-                <h2 className="text-3xl font-bold text-slate-900 mb-4">Booking Confirmed!</h2>
-                <p className="text-slate-600 text-lg mb-8">Your consultation has been successfully booked with <span className="font-semibold text-slate-900">{selectedLawyer?.name}</span>.</p>
-                <div className="flex flex-col sm:flex-row justify-center gap-4">
-                  <button 
-                    className="px-6 py-3 border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
-                    onClick={() => { setSelectedLawyer(null); setView('results'); }}
-                  >
-                    ← Back to Search
-                  </button>
-                  <button 
-                    className="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
-                    onClick={() => setView(user && user.role === 'lawyer' ? 'lawyer-dash' : 'client-dash')}
-                  >
-                    Go to Dashboard
-                  </button>
-                </div>
-              </div>
+            {view === 'payment' && bookingData && (
+              <PaymentGateway
+                bookingData={bookingData}
+                onBack={() => setView('booking')}
+                onPaymentSuccess={async (paymentData) => {
+                  await axios.post('/api/bookings', paymentData);
+                  await fetchBookings(); // Refresh bookings with new data
+                  setBookingData(paymentData);
+                  setView('payment-success');
+                }}
+              />
+            )}
+
+            {view === 'payment-success' && bookingData && (
+              <PaymentSuccess
+                bookingData={bookingData}
+                onViewBooking={() => setView(user && user.role === 'lawyer' ? 'lawyer-dash' : 'client-dash')}
+                onGoToDashboard={() => setView(user && user.role === 'lawyer' ? 'lawyer-dash' : 'client-dash')}
+              />
             )}
             
             {view === 'client-dash' && (
@@ -252,7 +271,7 @@ export default function App() {
             )}
             
             {view === 'lawyer-dash' && (
-              <LawyerDashboard user={user} bookings={bookings} onJoinCall={() => setView('video')} onDraft={() => setView('drafting')} />
+              <LawyerDashboard user={user} bookings={bookings} onJoinCall={(booking) => setView('video')} onDraft={() => setView('drafting')} />
             )}
             
             {view === 'video' && (

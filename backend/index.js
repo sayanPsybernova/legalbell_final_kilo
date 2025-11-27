@@ -66,7 +66,22 @@ if (!fs.existsSync(DB_FILE)) {
       },
     ],
     bookings: [],
-    users: [],
+    users: [
+      {
+        id: 100,
+        name: "Demo Client",
+        email: "client@gmail.com",
+        password: "Client@123",
+        role: "client"
+      },
+      {
+        id: 200,
+        name: "Demo Lawyer",
+        email: "lawyer@gmail.com",
+        password: "Lawyer@123",
+        role: "lawyer"
+      }
+    ],
   };
   writeDB(initial);
 }
@@ -120,19 +135,56 @@ app.post("/api/register", (req, res) => {
   }
 });
 
-// Simple login (mock)
+// Login with email/password authentication
 app.post("/api/login", (req, res) => {
-  const { role } = req.body;
-  if (role === "lawyer") {
+  const { email, password, role } = req.body;
+  const db = readDB();
+  
+  // Find user by email and password
+  const user = db.users.find(u =>
+    u.email === email &&
+    u.password === password &&
+    u.role === role
+  );
+  
+  if (user) {
     return res.json({
       ok: true,
-      user: { id: 1, name: "Adv. Demo Lawyer", role: "lawyer" },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
     });
   } else {
-    return res.json({
-      ok: true,
-      user: { id: 100, name: "John Doe", role: "client" },
-    });
+    // Check for dummy accounts if not found in DB
+    if (role === "lawyer" && email === "lawyer@gmail.com" && password === "Lawyer@123") {
+      return res.json({
+        ok: true,
+        user: {
+          id: 200,
+          name: "Demo Lawyer",
+          email: "lawyer@gmail.com",
+          role: "lawyer"
+        },
+      });
+    } else if (role === "client" && email === "client@gmail.com" && password === "Client@123") {
+      return res.json({
+        ok: true,
+        user: {
+          id: 100,
+          name: "Demo Client",
+          email: "client@gmail.com",
+          role: "client"
+        },
+      });
+    } else {
+      return res.json({
+        ok: false,
+        error: "Invalid email, password, or role"
+      });
+    }
   }
 });
 
@@ -140,10 +192,30 @@ app.post("/api/login", (req, res) => {
 app.post("/api/bookings", (req, res) => {
   const db = readDB();
   const booking = req.body;
-  booking.id = Date.now();
-  db.bookings.push(booking);
+  
+  // Ensure booking has all required fields
+  const completeBooking = {
+    id: Date.now(),
+    lawyerId: booking.lawyerId,
+    lawyerName: booking.lawyerName,
+    clientId: booking.clientId,
+    clientName: booking.clientName,
+    clientEmail: booking.clientEmail || (db.users.find(u => u.id === booking.clientId)?.email),
+    date: booking.date,
+    time: booking.time,
+    duration: booking.duration || 1,
+    fee: booking.fee,
+    caseType: booking.caseType || 'General Consultation',
+    status: booking.status || 'confirmed',
+    paymentId: booking.paymentId,
+    paymentMethod: booking.paymentMethod,
+    paidAt: booking.paidAt,
+    createdAt: booking.createdAt || new Date().toISOString()
+  };
+  
+  db.bookings.push(completeBooking);
   writeDB(db);
-  res.json({ ok: true, booking });
+  res.json({ ok: true, booking: completeBooking });
 });
 
 // List bookings

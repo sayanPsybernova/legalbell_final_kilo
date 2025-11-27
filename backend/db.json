@@ -30221,8 +30221,136 @@
       "fee": 4000,
       "image": "https://i.pravatar.cc/150?u=3774",
       "about": "Experienced Civil lawyer specializing in Private School Regulations. Dedicated to providing high-quality legal representation in Puducherry."
+    },
+    {
+      "id": 1764239384149,
+      "name": "Adv. Sayan",
+      "specialization": "Criminal",
+      "sub_specialty": "Murder / Homicide Cases",
+      "experience": 8,
+      "location": "Thane",
+      "fee": 1500,
+      "image": "https://i.pravatar.cc/150?u=1764239384149",
+      "about": "Experienced criminal lawyer specializing in murder and homicide cases. Dedicated to providing strong legal defense and ensuring justice for clients in Thane and surrounding areas."
     }
   ],
-  "bookings": [],
-  "users": []
+  "bookings": [
+    {
+      "lawyerId": 1000,
+      "lawyerName": "Adv. Anita Sharma",
+      "clientId": 100,
+      "clientName": "Demo Client",
+      "date": "2025-12-01",
+      "time": "10:00",
+      "duration": 1,
+      "fee": 2600,
+      "id": 1764238591436
+    },
+    {
+      "id": 1764239560294,
+      "lawyerId": 1764239384149,
+      "lawyerName": "Adv. Sayan",
+      "clientName": "Test Client",
+      "clientEmail": "testclient@gmail.com",
+      "date": "27/11/2025",
+      "time": "10:00 AM",
+      "caseType": "Murder Defense Consultation",
+      "fee": 1500,
+      "status": "confirmed",
+      "createdAt": "2025-11-27T10:32:40.305Z"
+    },
+    {
+      "id": 1764240239217,
+      "lawyerId": 1764239384149,
+      "lawyerName": "Adv. Sayan",
+      "clientName": "Test Client",
+      "clientEmail": "testclient@gmail.com",
+      "date": "27/11/2025",
+      "time": "10:00 AM",
+      "duration": 1,
+      "caseType": "Murder Defense Consultation",
+      "fee": 1500,
+      "status": "confirmed",
+      "createdAt": "2025-11-27T10:43:59.228Z"
+    },
+    {
+      "lawyerId": 2311,
+      "lawyerName": "Adv. Rohit Babu",
+      "clientId": 100,
+      "clientName": "Demo Client",
+      "date": "2025-11-20",
+      "time": "11:10",
+      "duration": 2,
+      "fee": 8200,
+      "paymentId": "PAY_1764240548812",
+      "paymentMethod": "upi",
+      "status": "paid",
+      "paidAt": "2025-11-27T10:49:08.812Z",
+      "id": 1764240548841
+    },
+    {
+      "lawyerId": 1000,
+      "lawyerName": "Adv. Anita Sharma",
+      "clientId": 100,
+      "clientName": "Demo Client",
+      "clientEmail": "client@gmail.com",
+      "date": "2025-11-28",
+      "time": "14:00",
+      "duration": 1,
+      "fee": 2600,
+      "caseType": "Test Consultation",
+      "paymentId": "PAY_TEST_123",
+      "paymentMethod": "card",
+      "status": "paid",
+      "paidAt": "2025-11-27T11:22:00.000Z",
+      "id": 1764242597717
+    },
+    {
+      "id": 1764242894296,
+      "lawyerId": 1764239384149,
+      "lawyerName": "Adv. Sayan",
+      "clientId": 100,
+      "clientName": "Demo Client",
+      "clientEmail": "client@gmail.com",
+      "date": "2025-11-27",
+      "time": "09:00",
+      "duration": 1,
+      "fee": 1500,
+      "caseType": "General Consultation",
+      "status": "paid",
+      "paymentId": "PAY_1764242894266",
+      "paymentMethod": "upi",
+      "paidAt": "2025-11-27T11:28:14.266Z",
+      "createdAt": "2025-11-27T11:28:14.296Z"
+    }
+  ],
+  "users": [
+    {
+      "id": 100,
+      "name": "Demo Client",
+      "email": "client@gmail.com",
+      "password": "Client@123",
+      "role": "client"
+    },
+    {
+      "id": 200,
+      "name": "Demo Lawyer",
+      "email": "lawyer@gmail.com",
+      "password": "Lawyer@123",
+      "role": "lawyer"
+    },
+    {
+      "id": 1764239384149,
+      "name": "Adv. Sayan",
+      "email": "sayan@gmail.com",
+      "password": "Sayan@123",
+      "role": "lawyer"
+    },
+    {
+      "id": 1764241700849,
+      "name": "Workflow Test Client",
+      "role": "client",
+      "email": "workflowtest1764241700841@gmail.com"
+    }
+  ]
 }

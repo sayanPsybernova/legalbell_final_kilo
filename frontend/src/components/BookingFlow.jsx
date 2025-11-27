@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Calendar, Clock, CheckCircle, User, MapPin, DollarSign } from 'lucide-react'
+import { Calendar, Clock, CheckCircle, User, MapPin, DollarSign, Star, Briefcase } from 'lucide-react'
 
 export default function BookingFlow({ lawyer, user, existingBookings, onConfirm }) {
   const [date, setDate] = useState('')
@@ -35,9 +35,25 @@ export default function BookingFlow({ lawyer, user, existingBookings, onConfirm 
                     </div>
                     <h3 className="font-bold text-slate-900 text-lg">{lawyer.name}</h3>
                     <p className="text-blue-600 text-sm font-medium mb-1">{lawyer.specialization}</p>
+                    <p className="text-slate-500 text-xs mb-2 italic">{lawyer.sub_specialty}</p>
+                    
+                    {/* Star Rating */}
+                    <div className="flex items-center mb-3">
+                        <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                                <Star
+                                    key={i}
+                                    className={`w-4 h-4 ${i < 4 ? 'text-yellow-400 fill-current' : 'text-slate-300'}`}
+                                />
+                            ))}
+                        </div>
+                        <span className="text-sm text-slate-600 ml-2">4.0 (24 reviews)</span>
+                    </div>
+                    
                     <div className="flex items-center text-slate-500 text-xs mb-4">
                         <MapPin className="w-3 h-3 mr-1" /> {lawyer.location}
                     </div>
+                    
                     <div className="w-full border-t border-slate-100 pt-4 text-left space-y-2">
                          <div className="flex justify-between text-sm">
                              <span className="text-slate-500">Rate</span>
@@ -47,7 +63,21 @@ export default function BookingFlow({ lawyer, user, existingBookings, onConfirm 
                              <span className="text-slate-500">Experience</span>
                              <span className="font-semibold text-slate-900">{lawyer.experience} years</span>
                          </div>
+                         <div className="flex justify-between text-sm">
+                             <span className="text-slate-500">Specialization</span>
+                             <span className="font-semibold text-slate-900">{lawyer.sub_specialty}</span>
+                         </div>
                     </div>
+                    
+                    {/* About Section */}
+                    {lawyer.about && (
+                        <div className="w-full border-t border-slate-100 pt-4 mt-4">
+                            <h4 className="font-semibold text-slate-900 text-sm mb-2 flex items-center">
+                                <Briefcase className="w-4 h-4 mr-2 text-blue-600" /> About
+                            </h4>
+                            <p className="text-xs text-slate-600 leading-relaxed">{lawyer.about}</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
