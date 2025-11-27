@@ -1,12 +1,19 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { User, Mail, Lock, MapPin, Briefcase, DollarSign, Clock, ArrowLeft } from 'lucide-react'
 import { getBookingPreferences } from '../utils/bookingPreferences'
 
-export default function AuthScreen({ onLogin, onRegister, onBackToResults, isClientConnection = false, isFromBooking = false }) {
+export default function AuthScreen({ onLogin, onRegister, onBackToResults, isClientConnection = false, isFromBooking = false, forceLoginMode = false }) {
   const [role, setRole] = useState('client')
-  const [isRegister, setIsRegister] = useState((isClientConnection && role === 'client') || isFromBooking)
+  const [isRegister, setIsRegister] = useState(!forceLoginMode && ((isClientConnection && role === 'client') || isFromBooking))
   const [formData, setFormData] = useState({ name:'', email:'', city:'', specialization:'Criminal', sub_specialty:'', fee:'', experience:'', about:'' })
   const [loginData, setLoginData] = useState({ email: '', password: '' })
+
+  // Update isRegister when forceLoginMode changes
+  useEffect(() => {
+    if (forceLoginMode) {
+      setIsRegister(false)
+    }
+  }, [forceLoginMode])
 
   const submit = (e) => {
     e.preventDefault()
@@ -42,14 +49,14 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
 
             {/* Role Switcher */}
             <div className="flex p-1 bg-slate-100 rounded-xl mb-6">
-                <button 
-                    onClick={()=>{setRole('client'); if(isClientConnection || isFromBooking) setIsRegister(true);}} 
+                <button
+                    onClick={()=>{setRole('client'); if(!forceLoginMode && (isClientConnection || isFromBooking)) setIsRegister(true);}}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${role === 'client' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                     Client
                 </button>
-                <button 
-                    onClick={()=>setRole('lawyer')} 
+                <button
+                    onClick={()=>{setRole('lawyer'); if(forceLoginMode) setIsRegister(false);}}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${role === 'lawyer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                     Lawyer
@@ -199,12 +206,14 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
         </div>
         
         <div className="bg-slate-50 px-8 py-4 border-t border-slate-100 text-center">
-            <button
-                onClick={()=>setIsRegister(!isRegister)}
-                className="text-sm text-slate-600 hover:text-blue-600 font-medium transition-colors"
-            >
-                {isRegister ? 'Already have an account? Login' : "Don't have an account? Sign Up"}
-            </button>
+            {!forceLoginMode && (
+                <button
+                    onClick={()=>setIsRegister(!isRegister)}
+                    className="text-sm text-slate-600 hover:text-blue-600 font-medium transition-colors"
+                >
+                    {isRegister ? 'Already have an account? Login' : "Don't have an account? Sign Up"}
+                </button>
+            )}
             {isFromBooking && isRegister && (
                 <p className="text-xs text-slate-400 mt-2">
                     Create an account to complete your booking

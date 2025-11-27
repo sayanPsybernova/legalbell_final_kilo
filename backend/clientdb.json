@@ -39,6 +39,22 @@
       "email": "client2@gmail.com",
       "password": "e77caa966568fedcd16482edd544e3fa7e3297d41fe8eaa2aadba2579e359e4c",
       "createdAt": "2025-11-27T16:29:10.514Z"
+    },
+    {
+      "id": 1764262132159,
+      "name": "client4",
+      "role": "client",
+      "email": "client4@gmail.com",
+      "password": "8b1612be2f0339d09cf29a471d203dc80984002fa4f797e2a76807a398e2fac2",
+      "createdAt": "2025-11-27T16:48:52.159Z"
+    },
+    {
+      "id": 1764262283467,
+      "name": "client5",
+      "role": "client",
+      "email": "client5@gmail.com",
+      "password": "e77caa966568fedcd16482edd544e3fa7e3297d41fe8eaa2aadba2579e359e4c",
+      "createdAt": "2025-11-27T16:51:23.467Z"
     }
   ]
 }

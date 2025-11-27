@@ -25,12 +25,20 @@ export default function App() {
   const [bookings, setBookings] = useState([])
   const [previousSearch, setPreviousSearch] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [forceLoginMode, setForceLoginMode] = useState(false)
 
   useEffect(() => {
     // fetch initial lawyers
     fetchLawyers()
     fetchBookings()
   }, [])
+
+  useEffect(() => {
+    // Reset forceLoginMode when navigating away from auth view
+    if (view !== 'auth') {
+      setForceLoginMode(false)
+    }
+  }, [view])
 
   const fetchLawyers = async (params = {}) => {
     if (params.lawyers) {
@@ -67,9 +75,14 @@ export default function App() {
   const handleRegister = async (formData) => {
     const res = await axios.post('/api/register', formData)
     if (res.data.ok) {
-      setUser(res.data.user)
-      setView(res.data.user.role === 'lawyer' ? 'lawyer-dash' : 'client-dash')
+      // Show success message and redirect to login page
+      alert('Registration successful! Please login with your credentials.')
+      setView('auth')
       fetchLawyers()
+      // Set a flag to force login mode
+      setTimeout(() => {
+        setForceLoginMode(true)
+      }, 100)
     }
   }
 
@@ -77,6 +90,8 @@ export default function App() {
     const res = await axios.post('/api/login', loginData)
     if (res.data.ok) {
       setUser(res.data.user)
+      // Reset force login mode after successful login
+      setForceLoginMode(false)
       
       // Check if there are saved booking preferences
       const bookingPreferences = loginData.bookingPreferences || getBookingPreferences()
@@ -115,7 +130,7 @@ export default function App() {
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center cursor-pointer" onClick={() => setView('landing')}>
+            <div className="flex items-center cursor-pointer" onClick={() => { setView('landing'); setForceLoginMode(false); }}>
               <div className="bg-blue-600 p-1.5 rounded-lg mr-2">
                 <Gavel className="h-6 w-6 text-white" />
               </div>
@@ -147,8 +162,8 @@ export default function App() {
                   </button>
                 </>
               ) : (
-                <button 
-                  onClick={() => setView('auth')}
+                <button
+                  onClick={() => { setView('auth'); setForceLoginMode(false); }}
                   className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
                 >
                   Login / Register
@@ -181,22 +196,22 @@ export default function App() {
                       <User className="h-5 w-5 text-slate-500" />
                       <span className="font-medium text-slate-900">{user.name}</span>
                     </div>
-                    <button 
-                      onClick={() => { setView(user.role === 'lawyer' ? 'lawyer-dash' : 'client-dash'); setMobileMenuOpen(false); }}
+                    <button
+                      onClick={() => { setView(user.role === 'lawyer' ? 'lawyer-dash' : 'client-dash'); setMobileMenuOpen(false); setForceLoginMode(false); }}
                       className="w-full text-left px-3 py-2 bg-slate-50 rounded-lg font-medium text-slate-700"
                     >
                       Dashboard
                     </button>
-                    <button 
-                      onClick={() => { setUser(null); setView('landing'); setMobileMenuOpen(false); }}
+                    <button
+                      onClick={() => { setUser(null); setView('landing'); setMobileMenuOpen(false); setForceLoginMode(false); }}
                       className="w-full text-left px-3 py-2 text-red-600 font-medium hover:bg-red-50 rounded-lg"
                     >
                       Logout
                     </button>
                   </>
                 ) : (
-                  <button 
-                    onClick={() => { setView('auth'); setMobileMenuOpen(false); }}
+                  <button
+                    onClick={() => { setView('auth'); setMobileMenuOpen(false); setForceLoginMode(false); }}
                     className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl font-medium shadow-sm"
                   >
                     Login / Register
@@ -263,8 +278,10 @@ export default function App() {
                   setSearchParams(previousSearch.params);
                   setLawyers(previousSearch.lawyers);
                   setView('results');
+                  setForceLoginMode(false);
                 } : null}
                 isFromBooking={!!selectedLawyer}
+                forceLoginMode={forceLoginMode}
               />
             )}
             

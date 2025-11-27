@@ -30522,6 +30522,24 @@
       "paymentMethod": "upi",
       "paidAt": "2025-11-27T16:31:21.410Z",
       "createdAt": "2025-11-27T16:31:21.425Z"
+    },
+    {
+      "id": 1764262332212,
+      "lawyerId": 1764259375772,
+      "lawyerName": "marco",
+      "clientId": 1764262283467,
+      "clientName": "client5",
+      "clientEmail": "client5@gmail.com",
+      "date": "2025-11-20",
+      "time": "14:50",
+      "duration": 1,
+      "fee": 2000,
+      "caseType": "General Consultation",
+      "status": "paid",
+      "paymentId": "PAY_1764262332198",
+      "paymentMethod": "upi",
+      "paidAt": "2025-11-27T16:52:12.198Z",
+      "createdAt": "2025-11-27T16:52:12.213Z"
     }
   ],
   "users": [
