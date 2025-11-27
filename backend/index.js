@@ -11,6 +11,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const DB_FILE = path.join(__dirname, "db.json");
+const CLIENT_DB_FILE = path.join(__dirname, "clientdb.json");
 
 // Initialize Gemini AI with Safety Settings to allow legal analysis of sensitive topics
 const genAI = new GoogleGenerativeAI("AIzaSyD2fD3IeBNvGq5P6pJEmHoYAYmsH-fDKaY");
@@ -48,19 +49,35 @@ function writeDB(data) {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
 
+function readClientDB() {
+  try {
+    return JSON.parse(fs.readFileSync(CLIENT_DB_FILE, "utf8"));
+  } catch (e) {
+    return { clients: [] };
+  }
+}
+
+function writeClientDB(data) {
+  fs.writeFileSync(CLIENT_DB_FILE, JSON.stringify(data, null, 2));
+}
+
 // Ensure DB exists
 if (!fs.existsSync(DB_FILE)) {
+  // Hash demo passwords for security
+  const crypto = require('crypto');
+  const lawyerPasswordHash = crypto.createHash('sha256').update("Lawyer@123").digest('hex');
+  
   const initial = {
     lawyers: [
       {
-        id: 1,
+        id: 200,
         name: "Adv. Demo Lawyer",
         specialization: "Criminal",
         sub_specialty: "Bail Matters",
         experience: 10,
         location: "Mumbai",
         fee: 500,
-        image: "https://i.pravatar.cc/150?u=1",
+        image: "https://i.pravatar.cc/150?u=200",
         about:
           "Demo lawyer entry. Register a new lawyer to test the live database.",
       },
@@ -68,22 +85,36 @@ if (!fs.existsSync(DB_FILE)) {
     bookings: [],
     users: [
       {
-        id: 100,
-        name: "Demo Client",
-        email: "client@gmail.com",
-        password: "Client@123",
-        role: "client"
-      },
-      {
         id: 200,
         name: "Demo Lawyer",
         email: "lawyer@gmail.com",
-        password: "Lawyer@123",
+        password: lawyerPasswordHash,
         role: "lawyer"
       }
     ],
   };
   writeDB(initial);
+}
+
+// Ensure Client DB exists
+if (!fs.existsSync(CLIENT_DB_FILE)) {
+  // Hash demo password for security
+  const crypto = require('crypto');
+  const clientPasswordHash = crypto.createHash('sha256').update("Client@123").digest('hex');
+  
+  const initialClientDB = {
+    clients: [
+      {
+        id: 100,
+        name: "Demo Client",
+        email: "client@gmail.com",
+        password: clientPasswordHash,
+        role: "client",
+        createdAt: new Date().toISOString()
+      }
+    ]
+  };
+  writeClientDB(initialClientDB);
 }
 
 // Routes
@@ -169,29 +200,49 @@ app.post("/api/register", (req, res) => {
       }
     });
   } else {
-    // Client registration
-    if (!name || !email) {
+    // Client registration - use separate client database
+    if (!name || !email || !password) {
       return res.json({
         ok: false,
-        error: "Missing required fields: name, email"
+        error: "Missing required fields: name, email, password"
+      });
+    }
+    
+    const clientDB = readClientDB();
+    
+    // Check if client with this email already exists
+    const existingClient = clientDB.clients.find(c => c.email === email);
+    if (existingClient) {
+      return res.json({
+        ok: false,
+        error: "A client with this email already exists"
       });
     }
     
     const id = Date.now();
-    db.users.push({
+    
+    // Hash password for security
+    const crypto = require('crypto');
+    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    
+    clientDB.clients.push({
       id,
       name,
       role: "client",
       email,
-      password: password || "" // Optional password for clients
+      password: hashedPassword, // Store hashed password for security
+      createdAt: new Date().toISOString()
     });
-    writeDB(db);
+    writeClientDB(clientDB);
+    
+    console.log(`✅ Client registered: ${name} (${email}) - ID: ${id}`);
     
     return res.json({
       ok: true,
       user: {
         id,
         name,
+        email,
         role: "client"
       }
     });
@@ -201,18 +252,23 @@ app.post("/api/register", (req, res) => {
 // Login with email/password authentication
 app.post("/api/login", (req, res) => {
   const { email, password, role } = req.body;
-  const db = readDB();
   const crypto = require('crypto');
-  
-  // Find user by email and role first
-  const user = db.users.find(u =>
-    u.email === email &&
-    u.role === role
-  );
   
   // Debug logging for login attempts
   console.log(`🔍 Login attempt: ${email} (${role})`);
   console.log(`🔍 Looking for user with email: ${email}`);
+  
+  let user = null;
+  
+  if (role === "client") {
+    // Check in client database
+    const clientDB = readClientDB();
+    user = clientDB.clients.find(c => c.email === email && c.role === "client");
+  } else if (role === "lawyer") {
+    // Check in main database for lawyers
+    const db = readDB();
+    user = db.users.find(u => u.email === email && u.role === "lawyer");
+  }
   
   if (user) {
     console.log(`🔍 Found user:`, {
@@ -240,6 +296,7 @@ app.post("/api/login", (req, res) => {
       };
       
       if (role === "lawyer") {
+        const db = readDB();
         const lawyerDetails = db.lawyers.find(l => l.id === user.id);
         if (lawyerDetails) {
           userData = {
@@ -265,41 +322,116 @@ app.post("/api/login", (req, res) => {
       });
     }
   } else {
-    // Check for dummy accounts if not found in DB (these use plain text passwords)
-    if (role === "lawyer" && email === "lawyer@gmail.com" && password === "Lawyer@123") {
-      console.log(`✅ Demo lawyer login: lawyer@gmail.com`);
-      return res.json({
-        ok: true,
-        user: {
-          id: 200,
-          name: "Demo Lawyer",
-          email: "lawyer@gmail.com",
-          role: "lawyer",
-          specialization: "Criminal",
-          location: "Mumbai",
-          fee: 500,
-          experience: 10
-        },
-      });
-    } else if (role === "client" && email === "client@gmail.com" && password === "Client@123") {
-      console.log(`✅ Demo client login: client@gmail.com`);
-      return res.json({
-        ok: true,
-        user: {
-          id: 100,
-          name: "Demo Client",
-          email: "client@gmail.com",
-          role: "client"
-        },
-      });
-    } else {
-      console.log(`❌ User not found: ${email} (${role})`);
-      return res.json({
-        ok: false,
-        error: "Invalid email, password, or role"
-      });
+    console.log(`❌ User not found: ${email} (${role})`);
+    return res.json({
+      ok: false,
+      error: "Invalid email, password, or role"
+    });
+  }
+});
+
+// Get client profile
+app.get("/api/client/:id", (req, res) => {
+  const clientDB = readClientDB();
+  const db = readDB();
+  const clientId = Number(req.params.id);
+  
+  const client = clientDB.clients.find(c => c.id === clientId && c.role === "client");
+  if (!client) {
+    return res.status(404).json({ error: "Client not found" });
+  }
+  
+  // Get client bookings from main database
+  const clientBookings = db.bookings.filter(b => b.clientId === clientId);
+  
+  res.json({
+    ok: true,
+    client: {
+      id: client.id,
+      name: client.name,
+      email: client.email,
+      role: client.role,
+      createdAt: client.createdAt
+    },
+    bookings: clientBookings
+  });
+});
+
+// Update client profile
+app.put("/api/client/:id", (req, res) => {
+  const clientDB = readClientDB();
+  const clientId = Number(req.params.id);
+  const { name, email, currentPassword, newPassword } = req.body;
+  
+  const clientIndex = clientDB.clients.findIndex(c => c.id === clientId && c.role === "client");
+  if (clientIndex === -1) {
+    return res.status(404).json({ error: "Client not found" });
+  }
+  
+  const client = clientDB.clients[clientIndex];
+  
+  // Verify current password if changing password
+  if (newPassword && !currentPassword) {
+    return res.json({ ok: false, error: "Current password required to change password" });
+  }
+  
+  if (currentPassword) {
+    const crypto = require('crypto');
+    const hashedCurrentPassword = crypto.createHash('sha256').update(currentPassword).digest('hex');
+    if (hashedCurrentPassword !== client.password) {
+      return res.json({ ok: false, error: "Current password is incorrect" });
     }
   }
+  
+  // Check if new email already exists (excluding current client)
+  if (email && email !== client.email) {
+    const emailExists = clientDB.clients.some(c => c.email === email && c.id !== clientId);
+    if (emailExists) {
+      return res.json({ ok: false, error: "Email already exists" });
+    }
+  }
+  
+  // Update client information
+  if (name) client.name = name;
+  if (email) client.email = email;
+  if (newPassword) {
+    const crypto = require('crypto');
+    client.password = crypto.createHash('sha256').update(newPassword).digest('hex');
+  }
+  
+  clientDB.clients[clientIndex] = client;
+  writeClientDB(clientDB);
+  
+  console.log(`✅ Client profile updated: ${client.name} (${client.email})`);
+  
+  res.json({
+    ok: true,
+    client: {
+      id: client.id,
+      name: client.name,
+      email: client.email,
+      role: client.role
+    }
+  });
+});
+
+// Get client bookings
+app.get("/api/client/:id/bookings", (req, res) => {
+  const clientDB = readClientDB();
+  const db = readDB();
+  const clientId = Number(req.params.id);
+  
+  const client = clientDB.clients.find(c => c.id === clientId && c.role === "client");
+  if (!client) {
+    return res.status(404).json({ error: "Client not found" });
+  }
+  
+  const clientBookings = db.bookings.filter(b => b.clientId === clientId);
+  
+  res.json({
+    ok: true,
+    bookings: clientBookings
+  });
 });
 
 // Create booking
@@ -314,7 +446,7 @@ app.post("/api/bookings", (req, res) => {
     lawyerName: booking.lawyerName,
     clientId: booking.clientId,
     clientName: booking.clientName,
-    clientEmail: booking.clientEmail || (db.users.find(u => u.id === booking.clientId)?.email),
+    clientEmail: booking.clientEmail || (readClientDB().clients.find(c => c.id === booking.clientId)?.email),
     date: booking.date,
     time: booking.time,
     duration: booking.duration || 1,

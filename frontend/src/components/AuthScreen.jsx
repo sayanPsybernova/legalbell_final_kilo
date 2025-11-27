@@ -169,12 +169,20 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
                         <input
                             required
                             type="password"
-                            placeholder="Password"
+                            placeholder="Password (min. 6 characters)"
                             value={formData.password || ''}
                             onChange={(e) => setFormData({...formData, password: e.target.value})}
+                            minLength="6"
                             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all"
                         />
                     </div>
+                    {role === 'client' && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-xs text-blue-700">
+                            <strong>Note:</strong> Your password will be securely encrypted for your protection.
+                        </p>
+                      </div>
+                    )}
                   </>
                 )}
 

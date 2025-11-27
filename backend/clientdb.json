@@ -1,0 +1,28 @@
+{
+  "clients": [
+    {
+      "id": 100,
+      "name": "Demo Client",
+      "email": "client@gmail.com",
+      "password": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd5f7b9e1e00fce",
+      "role": "client",
+      "createdAt": "2025-11-27T15:42:48.386Z"
+    },
+    {
+      "id": 1764258396556,
+      "name": "Test Client",
+      "role": "client",
+      "email": "testclient@example.com",
+      "password": "c1b8b58c3e7ac442b525e87709d5c1aef49a5d5acb70551be645887a978e238a",
+      "createdAt": "2025-11-27T15:46:36.557Z"
+    },
+    {
+      "id": 1764258746705,
+      "name": "ctest1",
+      "role": "client",
+      "email": "ctest1@gmail.com",
+      "password": "e77caa966568fedcd16482edd544e3fa7e3297d41fe8eaa2aadba2579e359e4c",
+      "createdAt": "2025-11-27T15:52:26.705Z"
+    }
+  ]
+}

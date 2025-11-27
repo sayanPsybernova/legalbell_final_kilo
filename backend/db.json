@@ -30320,6 +30320,17 @@
       "fee": 100,
       "image": "https://i.pravatar.cc/150?u=1764255481436",
       "about": ""
+    },
+    {
+      "id": 1764257085789,
+      "name": "test3",
+      "specialization": "Criminal",
+      "sub_specialty": "rape",
+      "experience": 10,
+      "location": "mumbai",
+      "fee": 500,
+      "image": "https://i.pravatar.cc/150?u=1764257085789",
+      "about": ""
     }
   ],
   "bookings": [
@@ -30428,6 +30439,24 @@
       "paymentMethod": "upi",
       "paidAt": "2025-11-27T13:59:00.000Z",
       "createdAt": "2025-11-27T13:59:23.459Z"
+    },
+    {
+      "id": 1764259142003,
+      "lawyerId": 1764257085789,
+      "lawyerName": "test3",
+      "clientId": 1764258746705,
+      "clientName": "ctest1",
+      "clientEmail": "ctest1@gmail.com",
+      "date": "2025-11-27",
+      "time": "10:10",
+      "duration": 2,
+      "fee": 1000,
+      "caseType": "General Consultation",
+      "status": "paid",
+      "paymentId": "PAY_1764259141989",
+      "paymentMethod": "upi",
+      "paidAt": "2025-11-27T15:59:01.989Z",
+      "createdAt": "2025-11-27T15:59:02.003Z"
     }
   ],
   "users": [
@@ -30510,6 +30539,34 @@
       "role": "lawyer",
       "email": "test2@gmail.com",
       "password": "8776f108e247ab1e2b323042c049c266407c81fbad41bde1e8dfc1bb66fd267e"
+    },
+    {
+      "id": 1764257085789,
+      "name": "test3",
+      "role": "lawyer",
+      "email": "test3@gmail.com",
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+    },
+    {
+      "id": 1764257671101,
+      "name": "Test Client",
+      "role": "client",
+      "email": "testclient@example.com",
+      "password": "TestPass123"
+    },
+    {
+      "id": 1764257671192,
+      "name": "Another Client",
+      "role": "client",
+      "email": "updatedclient@example.com",
+      "password": "AnotherPass123"
+    },
+    {
+      "id": 1764258011907,
+      "name": "Test Client",
+      "role": "client",
+      "email": "testclient1764258011878@example.com",
+      "password": "9dfcca01bb9a1cf8fa8d2c963b8519cc96a466de23f9a694d22f92c5676f8d05"
     }
   ]
 }
