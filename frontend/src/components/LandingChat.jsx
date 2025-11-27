@@ -28,6 +28,7 @@ export default function LandingChat({ onSearchComplete }) {
     },
   ]);
   const [input, setInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [conversationState, setConversationState] = useState({
     consultationType: null,
     city: null,
@@ -41,6 +42,38 @@ export default function LandingChat({ onSearchComplete }) {
     () => endRef.current?.scrollIntoView({ behavior: "smooth" }),
     [messages]
   );
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setInput(searchQuery.trim());
+      setShowChat(true);
+      // Simulate user sending the search query as their first message
+      setTimeout(() => {
+        setMessages([
+          {
+            role: "ai",
+            text: "👋 Hello! I'm your AI Legal Assistant. I'm here to help you find the perfect lawyer for your needs. Let's start with a simple question - would you prefer online or offline consultation?",
+          },
+          { role: "user", text: searchQuery.trim() }
+        ]);
+        setTimeout(() => {
+          processUserInput(searchQuery.trim().toLowerCase(), searchQuery.trim());
+        }, 700);
+      }, 500);
+    }
+  };
+
+  const handleSearchClick = () => {
+    setShowChat(true);
+    // Focus on the chat input after a short delay to ensure the chat is rendered
+    setTimeout(() => {
+      const chatInput = document.querySelector('input[placeholder*="Type your legal question"]');
+      if (chatInput) {
+        chatInput.focus();
+      }
+    }, 100);
+  };
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -342,32 +375,45 @@ export default function LandingChat({ onSearchComplete }) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.8 }}
-                className="flex flex-col gap-6 justify-center items-center"
+                className="flex flex-col gap-8 justify-center items-center w-full max-w-4xl mx-auto"
               >
-                {/* Enhanced Chat Bot Button */}
-                <motion.button
-                  onClick={() => setShowChat(true)}
-                  className="group relative px-10 py-5 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white font-bold rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-2 flex items-center gap-4 text-xl overflow-hidden"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-700 via-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="relative z-10 flex items-center gap-4">
-                    <motion.div
-                      animate={{ rotate: [0, 10, -10, 0] }}
-                      transition={{ repeat: Infinity, duration: 2, repeatDelay: 3 }}
-                      className="p-2 bg-white/20 rounded-full backdrop-blur-sm"
-                    >
-                      <MessageCircle className="w-6 h-6" />
-                    </motion.div>
-                    <span>Chat with AI Legal Assistant</span>
-                    <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
-                </motion.button>
+                {/* Big Search Bar */}
+                <form onSubmit={handleSearchSubmit} className="w-full">
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.6, duration: 0.6 }}
+                    className="relative group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
+                    <div className="relative bg-white/90 backdrop-blur-md rounded-3xl shadow-[0_20px_40px_rgb(0,0,0,0.15)] border border-purple-200/60 p-3 flex items-center gap-3 focus-within:shadow-[0_20px_40px_rgb(147,51,234,0.2)] focus-within:border-purple-300 transition-all duration-300">
+                      <div className="pl-2 text-purple-500">
+                        <MessageCircle className="w-6 h-6" />
+                      </div>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onClick={handleSearchClick}
+                        onFocus={handleSearchClick}
+                        placeholder="Describe your legal issue (e.g., 'divorce case in Mumbai', 'property dispute', 'criminal matter')..."
+                        className="flex-1 pr-4 py-4 bg-transparent border-none text-slate-800 placeholder:text-slate-400 focus:outline-none text-lg cursor-pointer"
+                      />
+                      <motion.button
+                        type="submit"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="p-4 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white rounded-2xl hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg active:scale-95 shrink-0"
+                      >
+                        <Send className="w-5 h-5" />
+                      </motion.button>
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-5 h-5 bg-green-400 rounded-full animate-pulse"></div>
+                  </motion.div>
+                </form>
 
                 {/* Trust Indicators */}
-                <div className="flex flex-col sm:flex-row gap-4 items-center text-slate-600">
+                <div className="flex flex-col sm:flex-row gap-6 items-center text-slate-600">
                   <div className="flex items-center gap-2">
                     <Shield className="w-5 h-5 text-green-500" />
                     <span className="text-sm font-medium">100% Confidential</span>
@@ -576,19 +622,19 @@ export default function LandingChat({ onSearchComplete }) {
                 </div>
               </motion.div>
               <h2 className="text-4xl font-bold mb-4">
-                Start Chatting with Our AI Legal Assistant
+                Start with Your Legal Question
               </h2>
               <p className="text-xl mb-8 opacity-90">
-                Get instant legal guidance, personalized recommendations, and find the perfect lawyer - all through a simple conversation
+                Get instant legal guidance, personalized recommendations, and find the perfect lawyer - just describe your legal issue above
               </p>
               <motion.button
-                onClick={() => setShowChat(true)}
+                onClick={() => document.querySelector('input[type="text"]')?.focus()}
                 className="px-8 py-4 bg-white text-blue-600 font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex items-center gap-3 mx-auto text-lg group"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <MessageCircle className="w-5 h-5 group-hover:animate-pulse" />
-                <span>Start Chat Now</span>
+                <span>Ask Your Legal Question</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </motion.button>
               <div className="mt-6 flex items-center justify-center gap-6 text-white/80 text-sm">
