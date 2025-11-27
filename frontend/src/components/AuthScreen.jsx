@@ -4,7 +4,7 @@ import { User, Mail, Lock, MapPin, Briefcase, DollarSign, Clock, ArrowLeft } fro
 export default function AuthScreen({ onLogin, onRegister, onBackToResults, isClientConnection = false, isFromBooking = false }) {
   const [role, setRole] = useState('client')
   const [isRegister, setIsRegister] = useState((isClientConnection && role === 'client') || isFromBooking)
-  const [formData, setFormData] = useState({ name:'', email:'', city:'', specialization:'Criminal', fee:'', experience:'', about:'' })
+  const [formData, setFormData] = useState({ name:'', email:'', city:'', specialization:'Criminal', sub_specialty:'', fee:'', experience:'', about:'' })
   const [loginData, setLoginData] = useState({ email: '', password: '' })
 
   const submit = (e) => {
@@ -79,9 +79,9 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="relative">
                                     <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                    <select 
+                                    <select
                                         className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all appearance-none"
-                                        onChange={e=>setFormData({...formData,specialization:e.target.value})} 
+                                        onChange={e=>setFormData({...formData,specialization:e.target.value})}
                                         value={formData.specialization}
                                     >
                                         <option>Criminal</option><option>Civil</option><option>Corporate</option><option>Family</option><option>Property</option><option>Cyber</option>
@@ -89,14 +89,25 @@ export default function AuthScreen({ onLogin, onRegister, onBackToResults, isCli
                                 </div>
                                 <div className="relative">
                                     <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                    <input 
-                                        required 
-                                        type="number" 
-                                        placeholder="Yrs Exp." 
+                                    <input
+                                        required
+                                        type="number"
+                                        placeholder="Yrs Exp."
                                         className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all"
-                                        onChange={e=>setFormData({...formData,experience:e.target.value})} 
+                                        onChange={e=>setFormData({...formData,experience:e.target.value})}
                                     />
                                 </div>
+                            </div>
+                            <div className="relative">
+                                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <input
+                                    required
+                                    type="text"
+                                    placeholder="Sub-specialty (e.g. Tax Law, Property Disputes)"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 focus:ring-blue-200 focus:ring-opacity-50 transition-all"
+                                    onChange={e=>setFormData({...formData,sub_specialty:e.target.value})}
+                                    value={formData.sub_specialty}
+                                />
                             </div>
                             <div className="relative">
                                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />

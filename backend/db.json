@@ -30232,6 +30232,94 @@
       "fee": 1500,
       "image": "https://i.pravatar.cc/150?u=1764239384149",
       "about": "Experienced criminal lawyer specializing in murder and homicide cases. Dedicated to providing strong legal defense and ensuring justice for clients in Thane and surrounding areas."
+    },
+    {
+      "id": 1764252384564,
+      "name": "John Smith",
+      "specialization": "Corporate",
+      "sub_specialty": "General Practice",
+      "experience": 5,
+      "location": "New Delhi",
+      "fee": 2000,
+      "image": "https://i.pravatar.cc/150?u=1764252384564",
+      "about": "Experienced corporate lawyer specializing in startup legal matters"
+    },
+    {
+      "id": 1764253486118,
+      "name": "Test Lawyer",
+      "specialization": "Criminal",
+      "sub_specialty": "General Practice",
+      "experience": 3,
+      "location": "Mumbai",
+      "fee": 1500,
+      "image": "https://i.pravatar.cc/150?u=1764253486118",
+      "about": "Test lawyer for validation"
+    },
+    {
+      "id": 1764254181513,
+      "name": "Security Test Lawyer",
+      "specialization": "Corporate",
+      "sub_specialty": "General Practice",
+      "experience": 8,
+      "location": "Bangalore",
+      "fee": 3000,
+      "image": "https://i.pravatar.cc/150?u=1764254181513",
+      "about": "Testing security features"
+    },
+    {
+      "id": 1764254630404,
+      "name": "sayan_test",
+      "specialization": "Family",
+      "sub_specialty": "General Practice",
+      "experience": 10,
+      "location": "bangalore",
+      "fee": 100,
+      "image": "https://i.pravatar.cc/150?u=1764254630404",
+      "about": ""
+    },
+    {
+      "id": 1764255169516,
+      "name": "Sub Specialty Test Lawyer",
+      "specialization": "Corporate",
+      "sub_specialty": "General Practice",
+      "experience": 12,
+      "location": "Delhi",
+      "fee": 4000,
+      "image": "https://i.pravatar.cc/150?u=1764255169516",
+      "about": "Specializing in corporate taxation and GST matters"
+    },
+    {
+      "id": 1764255229056,
+      "name": "Sub Specialty Test Lawyer",
+      "specialization": "Corporate",
+      "sub_specialty": "General Practice",
+      "experience": 12,
+      "location": "Delhi",
+      "fee": 4000,
+      "image": "https://i.pravatar.cc/150?u=1764255229056",
+      "about": "Specializing in corporate taxation and GST matters"
+    },
+    {
+      "id": 1764255249270,
+      "name": "Sub Specialty Test Lawyer",
+      "specialization": "Corporate",
+      "sub_specialty": "General Practice",
+      "experience": 12,
+      "location": "Delhi",
+      "fee": 4000,
+      "image": "https://i.pravatar.cc/150?u=1764255249270",
+      "about": "Specializing in corporate taxation and GST matters"
+    },
+    {
+      "id": 1764255481436,
+      "name": "Test2",
+      "specialization": "Property",
+      "sub_specialty": "property disput",
+      "experience": 10,
+      "location": "hydrabad",
+      "fee": 100,
+      "image": "https://i.pravatar.cc/150?u=1764255481436",
+      "about": ""
     }
   ],
   "bookings": [
@@ -30322,6 +30410,24 @@
       "paymentMethod": "upi",
       "paidAt": "2025-11-27T11:28:14.266Z",
       "createdAt": "2025-11-27T11:28:14.296Z"
+    },
+    {
+      "id": 1764251963459,
+      "lawyerId": 1000,
+      "lawyerName": "Adv. Anita Sharma",
+      "clientId": 100,
+      "clientName": "Demo Client",
+      "clientEmail": "client@gmail.com",
+      "date": "2025-11-29",
+      "time": "16:00",
+      "duration": 2,
+      "fee": 5200,
+      "caseType": "Follow-up Consultation",
+      "status": "paid",
+      "paymentId": "PAY_TEST_456",
+      "paymentMethod": "upi",
+      "paidAt": "2025-11-27T13:59:00.000Z",
+      "createdAt": "2025-11-27T13:59:23.459Z"
     }
   ],
   "users": [
@@ -30351,6 +30457,59 @@
       "name": "Workflow Test Client",
       "role": "client",
       "email": "workflowtest1764241700841@gmail.com"
+    },
+    {
+      "id": 1764252384564,
+      "name": "John Smith",
+      "role": "lawyer",
+      "email": "johnsmith@lawyer.com"
+    },
+    {
+      "id": 1764253486118,
+      "name": "Test Lawyer",
+      "role": "lawyer",
+      "email": "testlawyer@lawyer.com"
+    },
+    {
+      "id": 1764254181513,
+      "name": "Security Test Lawyer",
+      "role": "lawyer",
+      "email": "securitytest@lawyer.com"
+    },
+    {
+      "id": 1764254630404,
+      "name": "sayan_test",
+      "role": "lawyer",
+      "email": "test@gmail.com",
+      "password": "70708763d6a731a0c01a7082c3bae13557e363a8bc912e0a6736fd0a5248a2af"
+    },
+    {
+      "id": 1764255169516,
+      "name": "Sub Specialty Test Lawyer",
+      "role": "lawyer",
+      "email": "subspecialty@lawyer.com",
+      "password": "8776f108e247ab1e2b323042c049c266407c81fbad41bde1e8dfc1bb66fd267e"
+    },
+    {
+      "id": 1764255229056,
+      "name": "Sub Specialty Test Lawyer",
+      "role": "lawyer",
+      "email": "subspecialty@lawyer.com",
+      "password": "8776f108e247ab1e2b323042c049c266407c81fbad41bde1e8dfc1bb66fd267e"
+    },
+    {
+      "id": 1764255249270,
+      "name": "Sub Specialty Test Lawyer",
+      "role": "lawyer",
+      "email": "subspecialty@lawyer.com",
+      "password": "8776f108e247ab1e2b323042c049c266407c81fbad41bde1e8dfc1bb66fd267e"
+    },
+    {
+      "id": 1764255481436,
+      "name": "Test2",
+      "role": "lawyer",
+      "email": "test2@gmail.com",
+      "password": "8776f108e247ab1e2b323042c049c266407c81fbad41bde1e8dfc1bb66fd267e"
     }
   ]
 }

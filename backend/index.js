@@ -108,30 +108,93 @@ app.get("/api/lawyers", (req, res) => {
 // Register (lawyer or client)
 app.post("/api/register", (req, res) => {
   const db = readDB();
-  const { role, name, email, city, specialization, fee, experience, about } =
+  const { role, name, email, city, specialization, sub_specialty, fee, experience, about, password } =
     req.body;
+  
+  // Debug logging for sub_specialty
+  console.log('🔍 Registration data received:', {
+    role, name, email, city, specialization, sub_specialty, fee, experience, about,
+    hasPassword: !!password
+  });
+  
   if (role === "lawyer") {
+    // Validate required fields for lawyer registration
+    if (!name || !email || !password || !city || !specialization || !sub_specialty || !fee || !experience) {
+      return res.json({
+        ok: false,
+        error: "Missing required fields: name, email, password, city, specialization, sub_specialty, fee, experience"
+      });
+    }
+
     const id = Date.now();
     const newLawyer = {
       id,
       name,
       specialization: specialization || "General",
-      sub_specialty: "General Practice",
+      sub_specialty: sub_specialty,
       experience: Number(experience) || 0,
       location: city || "",
       fee: Number(fee) || 0,
       image: `https://i.pravatar.cc/150?u=${id}`,
       about: about || "",
     };
+    
+    // Store lawyer in lawyers array
     db.lawyers.push(newLawyer);
-    db.users.push({ id, name, role: "lawyer", email });
+    
+    // Store lawyer credentials in users array for login (HASH PASSWORD)
+    const crypto = require('crypto');
+    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    
+    db.users.push({
+      id,
+      name,
+      role: "lawyer",
+      email,
+      password: hashedPassword // Store hashed password for security
+    });
+    
     writeDB(db);
-    return res.json({ ok: true, user: { id, name, role: "lawyer" } });
+    console.log(`✅ Lawyer registered: ${name} (${email}) - ID: ${id}`);
+    
+    return res.json({
+      ok: true,
+      user: {
+        id,
+        name,
+        role: "lawyer",
+        email,
+        specialization: newLawyer.specialization,
+        location: newLawyer.location
+      }
+    });
   } else {
+    // Client registration
+    if (!name || !email) {
+      return res.json({
+        ok: false,
+        error: "Missing required fields: name, email"
+      });
+    }
+    
     const id = Date.now();
-    db.users.push({ id, name, role: "client", email });
+    db.users.push({
+      id,
+      name,
+      role: "client",
+      email,
+      password: password || "" // Optional password for clients
+    });
     writeDB(db);
-    return res.json({ ok: true, user: { id, name, role: "client" } });
+    
+    return res.json({
+      ok: true,
+      user: {
+        id,
+        name,
+        role: "client"
+      }
+    });
   }
 });
 
@@ -139,37 +202,87 @@ app.post("/api/register", (req, res) => {
 app.post("/api/login", (req, res) => {
   const { email, password, role } = req.body;
   const db = readDB();
+  const crypto = require('crypto');
   
-  // Find user by email and password
+  // Find user by email and role first
   const user = db.users.find(u =>
     u.email === email &&
-    u.password === password &&
     u.role === role
   );
   
+  // Debug logging for login attempts
+  console.log(`🔍 Login attempt: ${email} (${role})`);
+  console.log(`🔍 Looking for user with email: ${email}`);
+  
   if (user) {
-    return res.json({
-      ok: true,
-      user: {
+    console.log(`🔍 Found user:`, {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+    
+    // Hash the provided password and compare with stored hash
+    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    const isPasswordValid = hashedPassword === user.password;
+    
+    console.log(`🔍 Password validation: ${isPasswordValid ? '✅ Valid' : '❌ Invalid'}`);
+    
+    if (isPasswordValid) {
+      console.log(`✅ ${role} login successful: ${user.name} (${email}) - ID: ${user.id}`);
+      
+      // For lawyers, also fetch their lawyer details
+      let userData = {
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role
-      },
-    });
+      };
+      
+      if (role === "lawyer") {
+        const lawyerDetails = db.lawyers.find(l => l.id === user.id);
+        if (lawyerDetails) {
+          userData = {
+            ...userData,
+            specialization: lawyerDetails.specialization,
+            location: lawyerDetails.location,
+            fee: lawyerDetails.fee,
+            experience: lawyerDetails.experience
+          };
+          console.log(`✅ Lawyer details loaded: ${lawyerDetails.name} - ${lawyerDetails.specialization}`);
+        }
+      }
+      
+      return res.json({
+        ok: true,
+        user: userData
+      });
+    } else {
+      console.log(`❌ Password mismatch for: ${email} (${role})`);
+      return res.json({
+        ok: false,
+        error: "Invalid email, password, or role"
+      });
+    }
   } else {
-    // Check for dummy accounts if not found in DB
+    // Check for dummy accounts if not found in DB (these use plain text passwords)
     if (role === "lawyer" && email === "lawyer@gmail.com" && password === "Lawyer@123") {
+      console.log(`✅ Demo lawyer login: lawyer@gmail.com`);
       return res.json({
         ok: true,
         user: {
           id: 200,
           name: "Demo Lawyer",
           email: "lawyer@gmail.com",
-          role: "lawyer"
+          role: "lawyer",
+          specialization: "Criminal",
+          location: "Mumbai",
+          fee: 500,
+          experience: 10
         },
       });
     } else if (role === "client" && email === "client@gmail.com" && password === "Client@123") {
+      console.log(`✅ Demo client login: client@gmail.com`);
       return res.json({
         ok: true,
         user: {
@@ -180,6 +293,7 @@ app.post("/api/login", (req, res) => {
         },
       });
     } else {
+      console.log(`❌ User not found: ${email} (${role})`);
       return res.json({
         ok: false,
         error: "Invalid email, password, or role"
